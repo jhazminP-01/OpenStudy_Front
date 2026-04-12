@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../constants/colors';
+import { supabase } from '../../../lib/supabase';
 
 const RegisterScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -61,30 +62,25 @@ const RegisterScreen = ({ navigation }) => {
 
     setIsLoading(true);
     try {
-      // TODO: Implementar llamada a la API
-      const response = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password
-        })
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            username: formData.username
+          }
+        }
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert('Éxito', 'Usuario registrado correctamente');
-        navigation.navigate('Login');
-      } else {
-        if (response.status === 409) {
+      if (error) {
+        if (error.message.includes('already registered')) {
           setErrors({ email: 'El correo electrónico ya está registrado' });
         } else {
-          Alert.alert('Error', data.message || 'Error al registrar usuario');
+          Alert.alert('Error', error.message || 'Error al registrar usuario');
         }
+      } else {
+        Alert.alert('Éxito', 'Usuario registrado correctamente. Revisa tu correo para confirmar.');
+        navigation.navigate('Login');
       }
     } catch (error) {
       Alert.alert('Error', 'No se pudo conectar al servidor');

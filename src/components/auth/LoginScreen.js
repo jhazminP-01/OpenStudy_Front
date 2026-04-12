@@ -9,6 +9,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
+import { supabase } from '../../../lib/supabase';
 
 const LoginScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -38,30 +39,28 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     if (!validateForm()) return;
 
+    console.log('Intentando login con:', { email: formData.email, password: formData.password });
+    
     setIsLoading(true);
     try {
-      // TODO: Implementar llamada a la API
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          captcha: undefined
+        }
       });
 
-      const data = await response.json();
+      console.log('Respuesta de Supabase:', { data, error });
 
-      if (response.ok) {
-        // TODO: Guardar token en AsyncStorage
+      if (error) {
+        Alert.alert('Error', error.message || 'Credenciales incorrectas');
+      } else {
         Alert.alert('Éxito', 'Inicio de sesión correcto');
         navigation.navigate('Home');
-      } else {
-        Alert.alert('Error', data.message || 'Credenciales incorrectas');
       }
     } catch (error) {
+      console.log('Error catch:', error);
       Alert.alert('Error', 'No se pudo conectar al servidor');
     } finally {
       setIsLoading(false);

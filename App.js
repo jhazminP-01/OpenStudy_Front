@@ -8,6 +8,7 @@ import WelcomeScreen from './src/components/auth/WelcomeScreen';
 import RegisterScreen from './src/components/auth/RegisterScreen';
 import LoginScreen from './src/components/auth/LoginScreen';
 import LoadingScreen from './src/components/common/LoadingScreen';
+import HomeScreen from './src/components/main/HomeScreen';
 
 const Stack = createStackNavigator();
 
@@ -56,6 +57,21 @@ export default function App() {
             name="Loading" 
             component={LoadingScreen}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen}
+            options={{ 
+              headerShown: true,
+              title: 'OpenStudy',
+              headerStyle: {
+                backgroundColor: '#8B5CF6',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
           />
         </Stack.Navigator>
         <StatusBar style="light" />

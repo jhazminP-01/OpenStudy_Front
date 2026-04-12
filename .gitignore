@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# lib folder with sensitive credentials
+lib/
+
 # typescript
 *.tsbuildinfo
 
