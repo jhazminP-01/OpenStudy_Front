@@ -7,7 +7,7 @@ import {
   ImageBackground
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../styles/colors';
 
 const WelcomeScreen = ({ navigation }) => {
   return (
