@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Screens
 import HomeScreen from '../screens/profile/HomeScreen';
-import PlaceholderScreen from '../components/layout/PlaceholderScreen';
+import CreateRoomScreen from '../screens/CreateRoomScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -15,8 +15,7 @@ const RoomsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen 
       name="RoomsList" 
-      component={PlaceholderScreen}
-      initialParams={{ title: "Salas" }}
+      component={CreateRoomScreen}
     />
   </Stack.Navigator>
 );
@@ -32,7 +31,7 @@ export const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ color }) => {
           let iconName;
 
           if (route.name === 'Rooms') {

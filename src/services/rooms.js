@@ -1,79 +1,103 @@
 import { supabase } from '../../lib/supabase';
 
+const generateInvitationCode = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
+
 export const roomsService = {
-  // Listar salas disponibles
+  // Obtener salas activas
   getRooms: async (filters = {}) => {
     let query = supabase
-      .from('rooms')
-      .select('*')
-      .eq('status', 'active')
+      .from('sala')
+      .select(`
+        *,
+        materia (
+          id,
+          nombre
+        )
+      `)
+      .eq('estado', 'activa')
       .order('created_at', { ascending: false });
 
-    if (filters.category) {
-      query = query.eq('category', filters.category);
+    if (filters.materia_id) {
+      query = query.eq('materia_id', filters.materia_id);
     }
 
     const { data, error } = await query;
     return { data, error };
   },
 
-  // Crear nueva sala
-  createRoom: async (roomData, userId) => {
+  // Obtener materias
+  getMaterias: async () => {
     const { data, error } = await supabase
-      .from('rooms')
-      .insert({ ...roomData, moderator_id: userId })
+      .from('materia')
+      .select('*')
+      .order('nombre', { ascending: true });
+
+    return { data, error };
+  },
+
+  // Crear sala
+  createRoom: async (roomData, userId) => {
+    const codigoInvitacion = generateInvitationCode();
+
+    const { data, error } = await supabase
+      .from('sala')
+      .insert({
+        nombre: roomData.nombre,
+        descripcion: roomData.descripcion || '',
+        materia_id: roomData.materia_id,
+        estado: 'activa',
+        capacidad_maxima: roomData.capacidad_maxima,
+        creador_id: userId,
+        codigo_invitacion: codigoInvitacion,
+      })
       .select()
       .single();
 
-    return { data, error };
+    if (error) {
+      return { data: null, error };
+    }
+
+    const { error: participationError } = await supabase
+      .from('participacion')
+      .insert({
+        usuario_id: userId,
+        sala_id: data.id,
+        rol: 'moderador',
+        estado_conexion: 'activo',
+        esta_expulsado: false,
+      });
+
+    if (participationError) {
+      return { data: null, error: participationError };
+    }
+
+    return { data, error: null };
   },
 
-  // Unirse a una sala
-  joinRoom: async (roomId, userId) => {
-    const { data, error } = await supabase
-      .from('room_participants')
-      .insert({ room_id: roomId, user_id: userId });
-
-    return { data, error };
-  },
-
-  // Salir de una sala
-  leaveRoom: async (roomId, userId) => {
-    const { error } = await supabase
-      .from('room_participants')
-      .delete()
-      .eq('room_id', roomId)
-      .eq('user_id', userId);
-
-    return { error };
-  },
-
-  // Obtener detalles de una sala
+  // Obtener detalle de sala
   getRoomDetails: async (roomId) => {
     const { data, error } = await supabase
-      .from('rooms')
+      .from('sala')
       .select(`
         *,
-        participants:room_participants(
-          user_id,
-          joined_at,
-          is_moderator
+        materia (
+          id,
+          nombre
+        ),
+        participacion (
+          id,
+          usuario_id,
+          rol,
+          estado_conexion,
+          esta_expulsado,
+          fecha_ingreso
         )
       `)
       .eq('id', roomId)
       .single();
 
     return { data, error };
-  },
-
-  // Suscribirse a cambios en una sala
-  subscribeToRoom: (roomId, callback) => {
-    return supabase
-      .channel(`room-${roomId}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'rooms' },
-        callback
-      )
-      .subscribe();
   },
 };
