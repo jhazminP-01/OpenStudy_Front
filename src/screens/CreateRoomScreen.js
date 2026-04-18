@@ -44,15 +44,9 @@ export default function CreateRoomScreen({ navigation }) {
       setLoadingMaterias(false);
     }
   };
-  
-  const materiaSeleccionada = materias.find(m => m.id === materiaId);
-
-    navigation.navigate('RoomCreated', {
-    sala: data,
-  });
 
   const handleCreateRoom = async () => {
-    setSuccessMessage('');
+
     setGeneralError('');
 
     const validationErrors = validateCreateRoom({
