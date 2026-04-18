@@ -2,6 +2,8 @@ import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import RoomsListScreen from '../screens/RoomsListScreen';
+import RoomCreatedScreen from '../screens/RoomCreatedScreen';
 
 // Screens
 import HomeScreen from '../screens/profile/HomeScreen';
@@ -15,7 +17,15 @@ const RoomsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen 
       name="RoomsList" 
+      component={RoomsListScreen}
+    />
+    <Stack.Screen 
+      name="CreateRoom" 
       component={CreateRoomScreen}
+    />
+    <Stack.Screen 
+      name="RoomCreated" 
+      component={RoomCreatedScreen}
     />
   </Stack.Navigator>
 );

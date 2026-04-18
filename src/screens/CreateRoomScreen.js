@@ -21,7 +21,6 @@ export default function CreateRoomScreen({ navigation }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingMaterias, setLoadingMaterias] = useState(true);
-  const [successMessage, setSuccessMessage] = useState('');
   const [generalError, setGeneralError] = useState('');
 
   useEffect(() => {
@@ -45,6 +44,12 @@ export default function CreateRoomScreen({ navigation }) {
       setLoadingMaterias(false);
     }
   };
+  
+  const materiaSeleccionada = materias.find(m => m.id === materiaId);
+
+    navigation.navigate('RoomCreated', {
+    sala: data,
+  });
 
   const handleCreateRoom = async () => {
     setSuccessMessage('');
@@ -91,15 +96,9 @@ export default function CreateRoomScreen({ navigation }) {
 
       console.log('Sala creada:', data);
 
-      setSuccessMessage(
-        `Sala creada correctamente. Código: ${data.codigo_invitacion}`
-      );
-
-      setNombre('');
-      setDescripcion('');
-      setMateriaId(null);
-      setCapacidadMaxima('');
-      setErrors({});
+      navigation.navigate('RoomCreated', {
+        sala: data,
+      });
     } catch (err) {
       console.log('Error inesperado al crear sala:', err);
       setGeneralError('Ocurrió un error inesperado');
@@ -111,10 +110,6 @@ export default function CreateRoomScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Crear sala</Text>
-
-      {successMessage ? (
-        <Text style={styles.successText}>{successMessage}</Text>
-      ) : null}
 
       {generalError ? (
         <Text style={styles.errorText}>{generalError}</Text>
