@@ -156,9 +156,16 @@ const RegisterScreen = ({ navigation }) => {
               {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
             </View>
           </TouchableOpacity>
-          <Text style={styles.termsText}>
-            Acepto los términos y condiciones
-          </Text>
+          <View style={styles.termsTextContainer}>
+            <Text style={styles.termsTextPrefix}>Acepto los</Text>
+            <TouchableOpacity
+              style={styles.termsLinkWrapper}
+              onPress={() => navigation.navigate('Terms')}
+              disabled={isLoading}
+            >
+              <Text style={styles.termsLink}>términos y condiciones</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
 

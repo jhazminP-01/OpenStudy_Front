@@ -79,6 +79,28 @@ export const authStyles = StyleSheet.create({
     color: COLORS.textWhite,
     fontSize: 14,
   },
+  termsTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  termsTextPrefix: {
+    fontSize: 14,
+    color: COLORS.textWhite,
+  },
+  termsLink: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+    textDecorationColor: '#FFFFFF',
+  },
+  termsLinkWrapper: {
+    marginLeft: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    paddingBottom: 1,
+  },
   errorText: {
     color: COLORS.error,
     fontSize: 12,
@@ -151,5 +173,59 @@ export const homeStyles = StyleSheet.create({
   logoutButton: {
     marginTop: 20,
   },
+  headerlogoutButton: {
+    marginTop: 20,
+  },
+  // Estilos para el modal (mantener por si se necesita después)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: COLORS.background,
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    margin: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  closeButton: {
+    fontSize: 24,
+    color: COLORS.text,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    flex: 1,
+    padding: 20,
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  modalButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: COLORS.background,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
-
