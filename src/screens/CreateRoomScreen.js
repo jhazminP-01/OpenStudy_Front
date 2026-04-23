@@ -11,6 +11,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { roomsService } from '../services/rooms';
 import { validateCreateRoom } from '../utils/roomValidators';
+import { COLORS } from '../styles/colors';
 
 export default function CreateRoomScreen({ navigation }) {
   const [nombre, setNombre] = useState('');
@@ -201,7 +202,7 @@ export default function CreateRoomScreen({ navigation }) {
         disabled={loading || loadingMaterias}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={COLORS.textWhite} />
         ) : (
           <Text style={styles.buttonText}>Crear sala</Text>
         )}
@@ -213,41 +214,44 @@ export default function CreateRoomScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: '700',
     marginBottom: 20,
+    color: COLORS.textWhite,
   },
   label: {
     fontSize: 15,
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 12,
+    color: COLORS.textWhite,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: COLORS.inputBorder,
     borderRadius: 12,
     padding: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: COLORS.inputBackground,
+    color: COLORS.textWhite,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: COLORS.error,
   },
   textArea: {
     minHeight: 90,
     textAlignVertical: 'top',
   },
   errorText: {
-    color: '#ef4444',
+    color: COLORS.error,
     marginTop: 6,
     marginBottom: 6,
   },
   successText: {
-    color: '#16a34a',
+    color: COLORS.success,
     marginBottom: 12,
     fontWeight: '600',
   },
@@ -258,7 +262,7 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: COLORS.inputBorder,
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -266,18 +270,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryButtonSelected: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   categoryText: {
-    color: '#334155',
+    color: COLORS.textLight,
   },
   categoryTextSelected: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontWeight: '600',
   },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: COLORS.primary,
     marginTop: 24,
     paddingVertical: 14,
     borderRadius: 12,
@@ -287,7 +291,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontSize: 16,
     fontWeight: '700',
   },

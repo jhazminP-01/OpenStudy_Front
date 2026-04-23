@@ -2,9 +2,10 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { COLORS } from '../styles/colors';
+import { Button } from '../components/ui';
 
 export default function RoomCreatedScreen({ navigation, route }) {
   const sala = route.params?.sala;
@@ -47,23 +48,20 @@ export default function RoomCreatedScreen({ navigation, route }) {
       </View>
 
       {/* Botón principal */}
-      <TouchableOpacity
-        style={styles.primaryButton}
+      <Button
+        title="Ir a la Sala"
         onPress={() => {
           // luego aquí irá entrar a la sala
           navigation.navigate('RoomsList');
         }}
-      >
-        <Text style={styles.primaryText}>Ir a la Sala</Text>
-      </TouchableOpacity>
+      />
 
       {/* Botón secundario */}
-      <TouchableOpacity
-        style={styles.secondaryButton}
+      <Button
+        title="Volver al inicio"
         onPress={() => navigation.navigate('RoomsList')}
-      >
-        <Text style={styles.secondaryText}>Volver al inicio</Text>
-      </TouchableOpacity>
+        variant="outline"
+      />
 
     </View>
   );
@@ -72,7 +70,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#14051F',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -82,40 +80,40 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
 
   check: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontSize: 36,
     fontWeight: 'bold',
   },
 
   title: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 6,
   },
 
   subtitle: {
-    color: '#c4b5fd',
+    color: COLORS.textLight,
     marginBottom: 20,
   },
 
   card: {
     width: '100%',
-    backgroundColor: '#2A123D',
+    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
 
   roomName: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
@@ -128,48 +126,20 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    color: '#c4b5fd',
+    color: COLORS.textLight,
   },
 
   value: {
-    color: '#fff',
+    color: COLORS.textWhite,
     fontWeight: '500',
   },
 
   badge: {
-    backgroundColor: '#8B5CF6',
-    color: '#fff',
+    backgroundColor: COLORS.primary,
+    color: COLORS.textWhite,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     fontSize: 12,
-  },
-
-  primaryButton: {
-    width: '100%',
-    backgroundColor: '#8B5CF6',
-    padding: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-
-  primaryText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-
-  secondaryButton: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#8B5CF6',
-    padding: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-
-  secondaryText: {
-    color: '#8B5CF6',
-    fontWeight: '600',
   },
 });

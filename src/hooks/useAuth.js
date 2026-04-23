@@ -6,16 +6,7 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Obtener usuario actual al montar
-    const initializeAuth = async () => {
-      const { data } = await authService.getCurrentUser();
-      setUser(data?.user || null);
-      setLoading(false);
-    };
-
-    initializeAuth();
-
-    // Escuchar cambios de autenticación
+    // Escuchar cambios de autenticación (ya maneja sesión inicial)
     const { data: authListener } = authService.onAuthStateChange(
       (event, session) => {
         setUser(session?.user || null);
