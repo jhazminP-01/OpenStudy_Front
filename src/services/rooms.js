@@ -7,25 +7,32 @@ const generateInvitationCode = () => {
 export const roomsService = {
   // Obtener salas activas
   getRooms: async (filters = {}) => {
-    let query = supabase
-      .from('sala')
-      .select(`
-        *,
-        materia (
-          id,
-          nombre
-        )
-      `)
-      .eq('estado', 'activa')
-      .order('created_at', { ascending: false });
+      let query = supabase
+        .from('sala')
+        .select(`
+          *,
+          materia (
+            id,
+            nombre
+          ),
+          participacion (
+            id,
+            usuario_id,
+            rol,
+            estado_conexion,
+            esta_expulsado
+          )
+        `)
+        .eq('estado', 'activa')
+        .order('created_at', { ascending: false });
 
-    if (filters.materia_id) {
-      query = query.eq('materia_id', filters.materia_id);
-    }
+      if (filters.materia_id) {
+        query = query.eq('materia_id', filters.materia_id);
+      }
 
-    const { data, error } = await query;
-    return { data, error };
-  },
+      const { data, error } = await query;
+      return { data, error };
+    },
 
   // Obtener materias
   getMaterias: async () => {
