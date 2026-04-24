@@ -101,25 +101,28 @@ export default function RoomsListScreen({ navigation, route }) {
 
     if (name.includes('program')) {
       return {
-        icon: '</>',
+        icon: 'code-slash-outline',
         iconBoxStyle: styles.iconProgramming,
         buttonStyle: styles.buttonPurple,
+        color: '#A78BFA',
       };
     }
 
     if (name.includes('mat')) {
       return {
-        icon: '∑',
+        icon: 'calculator-outline',
         iconBoxStyle: styles.iconMath,
         buttonStyle: styles.buttonGreen,
+        color: '#34D399',
       };
     }
 
     if (name.includes('fis')) {
       return {
-        icon: '⚛',
+        icon: 'planet-outline',
         iconBoxStyle: styles.iconPhysics,
         buttonStyle: styles.buttonBlue,
+        color: '#60A5FA',
       };
     }
 
@@ -129,16 +132,18 @@ export default function RoomsListScreen({ navigation, route }) {
       name.includes('ingles')
     ) {
       return {
-        icon: 'Aa',
+        icon: 'chatbubble-ellipses-outline',
         iconBoxStyle: styles.iconLanguage,
         buttonStyle: styles.buttonPink,
+        color: '#F472B6',
       };
     }
 
     return {
-      icon: '✦',
+      icon: 'sparkles-outline',
       iconBoxStyle: styles.iconDefault,
       buttonStyle: styles.buttonPurple,
+      color: '#C084FC',
     };
   };
 
@@ -151,7 +156,11 @@ export default function RoomsListScreen({ navigation, route }) {
     <View style={styles.card}>
       <View style={styles.cardHeaderRow}>
         <View style={[styles.iconBox, theme.iconBoxStyle]}>
-          <Text style={styles.iconText}>{theme.icon}</Text>
+         <Ionicons
+            name={theme.icon}
+            size={22}
+            color={theme.color}
+          />
         </View>
 
         <View style={styles.cardContent}>
@@ -512,23 +521,23 @@ const styles = StyleSheet.create({
   },
 
   iconProgramming: {
-    backgroundColor: 'rgba(168, 85, 247, 0.25)',
+    backgroundColor: 'rgba(167,139,250,0.15)',
   },
 
   iconMath: {
-    backgroundColor: 'rgba(52, 211, 153, 0.18)',
+    backgroundColor: 'rgba(52,211,153,0.15)',
   },
 
   iconPhysics: {
-    backgroundColor: 'rgba(79, 125, 243, 0.18)',
+    backgroundColor: 'rgba(96,165,250,0.15)',
   },
 
   iconLanguage: {
-    backgroundColor: 'rgba(244, 92, 163, 0.18)',
+    backgroundColor: 'rgba(244,114,182,0.15)',
   },
 
   iconDefault: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(192,132,252,0.15)',
   },
 
   iconText: {
