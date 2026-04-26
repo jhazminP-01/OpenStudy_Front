@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator 
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native';
-import { COLORS } from '../../styles/colors';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 
 const Button = ({ 
   title, 
@@ -37,7 +37,7 @@ const Button = ({
       activeOpacity={0.7}
     >
       {isLoading ? (
-        <ActivityIndicator color={variant === 'outline' ? COLORS.primary : COLORS.textWhite} />
+        <ActivityIndicator color={variant === 'outline' ? COLORS.textWhite : COLORS.textWhite} />
       ) : (
         <Text style={textStyles}>{title}</Text>
       )}
@@ -47,11 +47,11 @@ const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    height: 50,
-    borderRadius: 8,
+    height: 56,
+    borderRadius: SPACING.borderRadiusRooms.button,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.buttonPrimary,
+    backgroundColor: COLORS.filterChipSelected,
     marginBottom: 16,
     width: '100%',
   },
@@ -60,8 +60,8 @@ const styles = StyleSheet.create({
   },
   buttonOutline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.borderRoomsMedium,
   },
   buttonError: {
     backgroundColor: COLORS.error,
@@ -71,12 +71,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.buttonDisabled,
   },
   text: {
+    ...TYPOGRAPHY.body,
     color: COLORS.textWhite,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: TYPOGRAPHY.rooms.title.fontWeight,
   },
   textOutline: {
-    color: COLORS.primary,
+    color: COLORS.textWhite,
   },
 });
 

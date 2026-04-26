@@ -95,7 +95,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
     </ScrollView>
   </LinearGradient>
 );
-
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,

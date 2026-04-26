@@ -7,14 +7,11 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { COLORS } from '../../styles/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { authService } from '../../services/auth';
 import { Button, Input } from '../../components/ui';
-import { validateEmail } from '../../utils/validators';
-
-import { authStyles } from '../../styles/authStyles';
-
-const styles = authStyles;
+import { useAuthValidation } from '../../hooks/useAuthValidation';
 
 const LoginScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -23,20 +20,10 @@ const LoginScreen = ({ navigation }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const { validateLogin } = useAuthValidation();
 
   const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'El correo electrónico es requerido';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'El correo electrónico no es válido';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    }
-
+    const newErrors = validateLogin(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -72,46 +59,89 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.containerCentered}>
-      <Text style={styles.title}>OpenStudy</Text>
-      <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
+    <LinearGradient
+      colors={COLORS.gradientRooms}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <View style={styles.content}>
+        <Text style={styles.title}>OpenStudy</Text>
+        <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
 
-      <View style={styles.form}>
-        <Input
-          label="Correo Electrónico"
-          placeholder="tu@email.com"
-          value={formData.email}
-          onChangeText={(value) => updateFormData('email', value)}
-          error={errors.email}
-          keyboardType="email-address"
-        />
+        <View style={styles.form}>
+          <Input
+            label="Correo Electrónico"
+            placeholder="tu@email.com"
+            value={formData.email}
+            onChangeText={(value) => updateFormData('email', value)}
+            error={errors.email}
+            keyboardType="email-address"
+          />
 
-        <Input
-          label="Contraseña"
-          placeholder="******"
-          value={formData.password}
-          onChangeText={(value) => updateFormData('password', value)}
-          error={errors.password}
-          secureTextEntry
-        />
+          <Input
+            label="Contraseña"
+            placeholder="******"
+            value={formData.password}
+            onChangeText={(value) => updateFormData('password', value)}
+            error={errors.password}
+            secureTextEntry
+          />
 
-        <Button
-          title="Iniciar Sesión"
-          onPress={handleLogin}
-          isLoading={isLoading}
-        />
+          <Button
+            title="Iniciar Sesión"
+            onPress={handleLogin}
+            isLoading={isLoading}
+          />
 
-        <TouchableOpacity 
-          style={styles.linkButton} 
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.linkText}>
-            ¿No tienes cuenta? <Text style={{ fontWeight: 'bold' }}>Regístrate</Text>
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.linkText}>
+              ¿No tienes cuenta? <Text style={{ fontWeight: 'bold' }}>Regístrate</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: SPACING.rooms.paddingX,
+    paddingTop: SPACING.rooms.paddingTop,
+    paddingBottom: SPACING.rooms.paddingBottom,
+    justifyContent: 'center',
+  },
+  title: {
+    ...TYPOGRAPHY.rooms.title,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomSmall,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
+    marginBottom: SPACING.rooms.marginBottomXLarge,
+    textAlign: 'center',
+  },
+  form: {
+    gap: SPACING.rooms.gapMedium,
+  },
+  linkButton: {
+    marginTop: SPACING.rooms.marginBottomMedium,
+    alignItems: 'center',
+  },
+  linkText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
+  },
+});
 
 export default LoginScreen;

@@ -62,4 +62,36 @@ export const TYPOGRAPHY = {
     fontWeight: FONTS.weights.normal,
     lineHeight: 16,
   },
+  
+  // Tipografías específicas de rooms
+  rooms: {
+    title: {
+      fontSize: 28,
+      fontWeight: FONTS.weights.extrabold,
+    },
+    roomTitle: {
+      fontSize: 19,
+      fontWeight: FONTS.weights.bold,
+    },
+    roomDescription: {
+      fontSize: 14,
+      lineHeight: 21,
+    },
+    badge: {
+      fontSize: 12,
+      fontWeight: FONTS.weights.bold,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: FONTS.weights.semibold,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: FONTS.weights.bold,
+    },
+    sectionCount: {
+      fontSize: 14,
+      fontWeight: FONTS.weights.semibold,
+    },
+  },
 };

@@ -7,44 +7,36 @@ import {
   ImageBackground
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../../styles/colors';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
+import { IconBox, Button } from '../../components/ui';
 
 const WelcomeScreen = ({ navigation }) => {
   return (
     <LinearGradient
-      colors={[COLORS.primary, COLORS.primaryDark]}
+      colors={COLORS.gradientRooms}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <View style={styles.icon}>
-            <Text style={styles.iconText}>📚</Text>
-          </View>
+          <IconBox icon="📚" size={80} />
         </View>
-        
+
         <Text style={styles.title}>OpenStudy</Text>
         <Text style={styles.subtitle}>Estudia mejor, juntos</Text>
-        
+
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline]}
+          <Button
+            title="Crear Cuenta"
             onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={[styles.buttonText, styles.buttonOutlineText]}>
-              Crear Cuenta
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.button, styles.buttonFilled]}
+            variant="outline"
+          />
+
+          <Button
+            title="Iniciar Sesión"
             onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={[styles.buttonText, styles.buttonFilledText]}>
-              Iniciar Sesión
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     </LinearGradient>
@@ -59,64 +51,27 @@ const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
-    paddingHorizontal: 32,
+    paddingHorizontal: SPACING.rooms.paddingX,
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: 32,
-  },
-  icon: {
-    width: 80,
-    height: 80,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconText: {
-    fontSize: 40,
+    marginBottom: SPACING.rooms.marginBottomLarge,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.rooms.title,
     color: COLORS.textWhite,
-    marginBottom: 8,
+    marginBottom: SPACING.rooms.marginBottomSmall,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 48,
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
+    marginBottom: SPACING.xl,
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
-  },
-  button: {
-    height: 56,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: COLORS.textWhite,
-  },
-  buttonFilled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonOutlineText: {
-    color: COLORS.textWhite,
-  },
-  buttonFilledText: {
-    color: COLORS.textWhite,
+    gap: SPACING.rooms.gapLarge,
   },
 });
 

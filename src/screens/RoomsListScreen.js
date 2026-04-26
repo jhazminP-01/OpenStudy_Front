@@ -148,190 +148,190 @@ export default function RoomsListScreen({ navigation, route }) {
   };
 
   const renderRoom = ({ item }) => {
-  const participantsCount = item.participacion?.length || 0;
-  const statusInfo = getStatusInfo(item.estado);
-  const theme = getCardTheme(item.materia?.nombre);
+    const participantsCount = item.participacion?.length || 0;
+    const statusInfo = getStatusInfo(item.estado);
+    const theme = getCardTheme(item.materia?.nombre);
 
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeaderRow}>
-        <View style={[styles.iconBox, theme.iconBoxStyle]}>
-         <Ionicons
-            name={theme.icon}
-            size={22}
-            color={theme.color}
-          />
-        </View>
-
-        <View style={styles.cardContent}>
-          <View style={styles.cardTopRow}>
-            <Text style={styles.categoryBadge}>
-              {item.materia?.nombre?.toUpperCase() || 'MATERIA'}
-            </Text>
-
-            <View style={[styles.statusBadge, statusInfo.containerStyle]}>
-              <Text style={[styles.statusText, statusInfo.textStyle]}>
-                {statusInfo.label}
-              </Text>
-            </View>
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <View style={[styles.iconBox, theme.iconBoxStyle]}>
+            <Ionicons
+              name={theme.icon}
+              size={22}
+              color={theme.color}
+            />
           </View>
 
-          <Text style={styles.roomTitle}>{item.nombre}</Text>
+          <View style={styles.cardContent}>
+            <View style={styles.cardTopRow}>
+              <Text style={styles.categoryBadge}>
+                {item.materia?.nombre?.toUpperCase() || 'MATERIA'}
+              </Text>
 
-          {!!item.descripcion && (
-            <Text style={styles.roomDescription} numberOfLines={2}>
-              {item.descripcion}
+              <View style={[styles.statusBadge, statusInfo.containerStyle]}>
+                <Text style={[styles.statusText, statusInfo.textStyle]}>
+                  {statusInfo.label}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.roomTitle}>{item.nombre}</Text>
+
+            {!!item.descripcion && (
+              <Text style={styles.roomDescription} numberOfLines={2}>
+                {item.descripcion}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Ionicons name="people-outline" size={16} color="#C4B5FD" />
+            <Text style={styles.infoText}>
+              {participantsCount}/{item.capacidad_maxima} participantes
             </Text>
-          )}
+          </View>
+
+          <View style={styles.infoItem}>
+            <Ionicons name="key-outline" size={16} color="#FACC15" />
+            <Text style={styles.infoText}>{item.codigo_invitacion}</Text>
+          </View>
         </View>
+
+        <TouchableOpacity style={[styles.enterButton, theme.buttonStyle]}>
+          <Text style={styles.enterButtonText}>Entrar →</Text>
+        </TouchableOpacity>
       </View>
+    );
+  };
 
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Ionicons name="people-outline" size={16} color="#C4B5FD" />
-          <Text style={styles.infoText}>
-            {participantsCount}/{item.capacidad_maxima} participantes
-          </Text>
-        </View>
+  return (
+    <LinearGradient
+      colors={['#4B1387', '#170531', '#070016']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <View style={styles.screenCenter}>
+        <FlatList
+          style={[styles.listWrapper, { maxWidth: contentMaxWidth }]}
+          data={filteredRooms}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderRoom}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <>
+              <View style={styles.header}>
+                <View style={styles.headerTextBox}>
+                  <Text style={styles.title}>Salas de Estudio</Text>
+                  <Text style={styles.subtitle}>
+                    Encuentra tu espacio para aprender y colaborar
+                  </Text>
+                </View>
 
-        <View style={styles.infoItem}>
-          <Ionicons name="key-outline" size={16} color="#FACC15" />
-          <Text style={styles.infoText}>{item.codigo_invitacion}</Text>
-        </View>
-      </View>
+                <TouchableOpacity style={styles.notificationButton}>
+                  <Ionicons name="notifications" size={22} color="#FACC15" />
+                  <View style={styles.notificationDot} />
+                </TouchableOpacity>
+              </View>
 
-      <TouchableOpacity style={[styles.enterButton, theme.buttonStyle]}>
-        <Text style={styles.enterButtonText}>Entrar →</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar salas de estudio..."
+                placeholderTextColor="#8D74B8"
+                value={search}
+                onChangeText={setSearch}
+              />
 
-return (
-  <LinearGradient
-    colors={['#4B1387', '#170531', '#070016']}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 1 }}
-    style={styles.container}
-  >
-    <View style={styles.screenCenter}>
-      <FlatList
-        style={[styles.listWrapper, { maxWidth: contentMaxWidth }]}
-        data={filteredRooms}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderRoom}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <>
-            <View style={styles.header}>
-              <View style={styles.headerTextBox}>
-                <Text style={styles.title}>Salas de Estudio</Text>
-                <Text style={styles.subtitle}>
-                  Encuentra tu espacio para aprender y colaborar
+              <FlatList
+                data={[{ id: 'all', nombre: 'Todas' }, ...materias]}
+                keyExtractor={(item) => String(item.id)}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filtersContainer}
+                renderItem={({ item }) => {
+                  const isSelected =
+                    item.id === 'all'
+                      ? selectedMateria === null
+                      : selectedMateria === item.id;
+
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.filterChip,
+                        isSelected && styles.filterChipSelected,
+                      ]}
+                      onPress={() =>
+                        setSelectedMateria(item.id === 'all' ? null : item.id)
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          isSelected && styles.filterChipTextSelected,
+                        ]}
+                      >
+                        {item.nombre}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionLeft}>
+                  <View style={styles.sectionIconContainer}>
+                    <Ionicons name="people" size={18} color="#C4B5FD" />
+                  </View>
+                  <Text style={styles.sectionTitle}>Salas disponibles</Text>
+                </View>
+
+                <Text style={styles.sectionCount}>
+                  {filteredRooms.length} salas activas
                 </Text>
               </View>
 
-              <TouchableOpacity style={styles.notificationButton}>
-                <Ionicons name="notifications" size={22} color="#FACC15" />
-                <View style={styles.notificationDot} />
-              </TouchableOpacity>
-            </View>
+              {loading ? (
+                <ActivityIndicator
+                  size="large"
+                  color="#C86CFF"
+                  style={{ marginTop: 30, marginBottom: 20 }}
+                />
+              ) : null}
 
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar salas de estudio..."
-              placeholderTextColor="#8D74B8"
-              value={search}
-              onChangeText={setSearch}
-            />
+              {!loading && generalError ? (
+                <Text style={styles.errorText}>{generalError}</Text>
+              ) : null}
 
-            <FlatList
-              data={[{ id: 'all', nombre: 'Todas' }, ...materias]}
-              keyExtractor={(item) => String(item.id)}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filtersContainer}
-              renderItem={({ item }) => {
-                const isSelected =
-                  item.id === 'all'
-                    ? selectedMateria === null
-                    : selectedMateria === item.id;
+              {!loading && !generalError && filteredRooms.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No hay salas disponibles por ahora
+                </Text>
+              ) : null}
+            </>
+          }
+          ListFooterComponent={<View style={{ height: 110 }} />}
+        />
+      </View>
 
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.filterChip,
-                      isSelected && styles.filterChipSelected,
-                    ]}
-                    onPress={() =>
-                      setSelectedMateria(item.id === 'all' ? null : item.id)
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        isSelected && styles.filterChipTextSelected,
-                      ]}
-                    >
-                      {item.nombre}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionLeft}>
-                <View style={styles.sectionIconContainer}>
-                  <Ionicons name="people" size={18} color="#C4B5FD" />
-                </View>
-                <Text style={styles.sectionTitle}>Salas disponibles</Text>
-              </View>
-
-              <Text style={styles.sectionCount}>
-                {filteredRooms.length} salas activas
-              </Text>
-            </View>
-
-            {loading ? (
-              <ActivityIndicator
-                size="large"
-                color="#C86CFF"
-                style={{ marginTop: 30, marginBottom: 20 }}
-              />
-            ) : null}
-
-            {!loading && generalError ? (
-              <Text style={styles.errorText}>{generalError}</Text>
-            ) : null}
-
-            {!loading && !generalError && filteredRooms.length === 0 ? (
-              <Text style={styles.emptyText}>
-                No hay salas disponibles por ahora
-              </Text>
-            ) : null}
-          </>
-        }
-        ListFooterComponent={<View style={{ height: 110 }} />}
-      />
-    </View>
-
-    <TouchableOpacity
-      style={styles.createRoomButtonWrapper}
-      onPress={() => navigation.navigate('CreateRoom')}
-    >
-      <LinearGradient
-        colors={['#C86CFF', '#8B5CF6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.createRoomButton}
+      <TouchableOpacity
+        style={styles.createRoomButtonWrapper}
+        onPress={() => navigation.navigate('CreateRoom')}
       >
-        <Text style={styles.createRoomButtonText}>＋ Crear sala</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  </LinearGradient>
-);
+        <LinearGradient
+          colors={['#C86CFF', '#8B5CF6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.createRoomButton}
+        >
+          <Text style={styles.createRoomButtonText}>＋ Crear sala</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </LinearGradient>
+  );
 }
 
 const styles = StyleSheet.create({

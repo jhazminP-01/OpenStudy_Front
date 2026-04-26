@@ -30,6 +30,21 @@ export const SPACING = {
     xl: 32,
   },
   
+  // Espaciados específicos de rooms
+  rooms: {
+    paddingX: 16,
+    paddingTop: 22,
+    paddingBottom: 12,
+    marginBottomSmall: 6,
+    marginBottomMedium: 14,
+    marginBottomLarge: 18,
+    marginBottomXLarge: 22,
+    marginTop: 14,
+    gapSmall: 6,
+    gapMedium: 10,
+    gapLarge: 12,
+  },
+  
   // Border radius
   borderRadius: {
     sm: 4,
@@ -38,6 +53,18 @@ export const SPACING = {
     xl: 16,
     '2xl': 24,
     full: 9999,
+  },
+  
+  // Border radius específicos de rooms
+  borderRadiusRooms: {
+    searchInput: 20,
+    filterChip: 22,
+    card: 24,
+    backButton: 14,
+    input: 18,
+    button: 16,
+    badge: 12,
+    sectionIcon: 10,
   },
   
   // Dimensiones comunes
@@ -59,6 +86,16 @@ export const SPACING = {
       lg: 48,
       xl: 64,
       '2xl': 80,
+    },
+    // Dimensiones específicas de rooms
+    rooms: {
+      notificationButton: { width: 58, height: 58 },
+      backButton: { width: 42, height: 42 },
+      iconBox: { width: 78, height: 78 },
+      sectionIcon: { width: 32, height: 32 },
+      footerHeight: 110,
+      footerHeightLarge: 120,
+      textAreaMinHeight: 105,
     },
   },
 };
