@@ -20,7 +20,8 @@ export const roomsService = {
             usuario_id,
             rol,
             estado_conexion,
-            esta_expulsado
+            esta_expulsado,
+            fecha_ingreso
           )
         `)
         .eq('estado', 'activa')
@@ -31,6 +32,18 @@ export const roomsService = {
       }
 
       const { data, error } = await query;
+
+      // Filtrar solo participaciones activas y no expulsadas
+      if (data) {
+        data.forEach(room => {
+          if (room.participacion) {
+            room.participacion = room.participacion.filter(
+              p => p.estado_conexion === 'activo' && !p.esta_expulsado
+            );
+          }
+        });
+      }
+
       return { data, error };
     },
 
@@ -66,18 +79,28 @@ export const roomsService = {
       return { data: null, error };
     }
 
-    const { error: participationError } = await supabase
+    // Verificar si ya existe participación para evitar duplicados (React Strict Mode)
+    const { data: existingParticipation } = await supabase
       .from('participacion')
-      .insert({
-        usuario_id: userId,
-        sala_id: data.id,
-        rol: 'moderador',
-        estado_conexion: 'activo',
-        esta_expulsado: false,
-      });
+      .select('id')
+      .eq('sala_id', data.id)
+      .eq('usuario_id', userId)
+      .single();
 
-    if (participationError) {
-      return { data: null, error: participationError };
+    if (!existingParticipation) {
+      const { error: participationError } = await supabase
+        .from('participacion')
+        .insert({
+          usuario_id: userId,
+          sala_id: data.id,
+          rol: 'moderador',
+          estado_conexion: 'activo',
+          esta_expulsado: false,
+        });
+
+      if (participationError) {
+        return { data: null, error: participationError };
+      }
     }
 
     return { data, error: null };
@@ -110,6 +133,7 @@ export const roomsService = {
 
   // Unirse a una sala
   joinRoom: async (roomId, userId) => {
+
     // 1. Verificar que la sala existe y está activa
     const { data: room, error: roomError } = await supabase
       .from('sala')
@@ -122,20 +146,34 @@ export const roomsService = {
       return { data: null, error: { message: 'La sala no existe o no está activa' } };
     }
 
-    // 2. Verificar que el usuario no ya está en la sala
+    // 2. Verificar si el usuario tiene un registro (activo o inactivo)
     const { data: existingParticipations, error: checkError } = await supabase
       .from('participacion')
       .select('*')
       .eq('sala_id', roomId)
       .eq('usuario_id', userId)
-      .eq('estado_conexion', 'activo')
       .eq('esta_expulsado', false)
       .limit(1);
 
     const existingParticipation = existingParticipations && existingParticipations.length > 0 ? existingParticipations[0] : null;
 
     if (existingParticipation) {
-      return { data: null, error: { message: 'Ya estás en esta sala' } };
+      // Si ya está activo, error
+      if (existingParticipation.estado_conexion === 'activo') {
+        return { data: null, error: { message: 'Ya estás en esta sala' } };
+      }
+
+      // Si está inactivo, reactivar
+      const { error: reactivateError } = await supabase
+        .from('participacion')
+        .update({ estado_conexion: 'activo' })
+        .eq('id', existingParticipation.id);
+
+      if (reactivateError) {
+        return { data: null, error: reactivateError };
+      }
+
+      return { data: room, error: null };
     }
 
     // 3. Verificar capacidad máxima
@@ -152,7 +190,7 @@ export const roomsService = {
       return { data: null, error: { message: 'La sala está llena' } };
     }
 
-    // 4. Insertar en participacion
+    // 4. Crear nueva participación
     const { data, error } = await supabase
       .from('participacion')
       .insert({

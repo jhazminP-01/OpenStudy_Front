@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import { roomsService } from '../services/rooms';
+import { supabase } from '../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -63,8 +64,77 @@ export default function RoomsListScreen({ navigation, route }) {
     }
   }, []);
 
+  let subscription = null;
+
+  const setupRealtimeSubscription = () => {
+    subscription = supabase
+      .channel('participacion:all_rooms')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'participacion'
+      }, (payload) => {
+        updateRoomParticipantCount(payload);
+      })
+      .subscribe();
+  };
+
+  const updateRoomParticipantCount = (payload) => {
+    if (!payload.new?.sala_id) {
+      return;
+    }
+    
+    const roomId = payload.new.sala_id;
+    
+    setRooms(prevRooms => {
+      const updatedRooms = prevRooms.map(room => {
+        if (room.id !== roomId) {
+          return room;
+        }
+        
+        let newParticipaciones = [...(room.participacion || [])];
+        
+        switch (payload.eventType) {
+          case 'INSERT':
+            if (payload.new && !newParticipaciones.find(p => p.id === payload.new.id)) {
+              newParticipaciones.push(payload.new);
+            }
+            break;
+            
+          case 'UPDATE':
+            const index = newParticipaciones.findIndex(p => p.id === payload.new.id);
+            if (index !== -1 && payload.new) {
+              newParticipaciones[index] = payload.new;
+            } else if (payload.new && !newParticipaciones.find(p => p.id === payload.new.id)) {
+              newParticipaciones.push(payload.new);
+            }
+            break;
+            
+          case 'DELETE':
+            newParticipaciones = newParticipaciones.filter(p => p.id !== payload.old.id);
+            break;
+        }
+        
+        return {
+          ...room,
+          participacion: newParticipaciones
+        };
+      });
+      
+      return updatedRooms;
+    });
+  };
+
   useEffect(() => {
     loadData();
+    setupRealtimeSubscription();
+
+    return () => {
+      // Cleanup subscription when component unmounts
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
   }, [loadData]);
 
   useEffect(() => {
@@ -175,7 +245,9 @@ export default function RoomsListScreen({ navigation, route }) {
   };
 
   const renderRoom = ({ item }) => {
-    const participantsCount = item.participacion?.length || 0;
+    const participantsCount = item.participacion?.filter(
+      p => p.estado_conexion === 'activo' && !p.esta_expulsado
+    ).length || 0;
     const statusInfo = getStatusInfo(item.estado);
     const theme = getCardTheme(item.materia?.nombre);
     const isJoining = joiningRoomId === item.id;

@@ -73,7 +73,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
       <TouchableOpacity
         style={styles.primaryButtonWrapper}
-        onPress={() => navigation.navigate('RoomsList', { refresh: true })}
+        onPress={() => navigation.navigate('Room', { roomId: sala?.id })}
       >
         <LinearGradient
           colors={COLORS.gradientButton}

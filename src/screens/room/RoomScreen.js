@@ -4,15 +4,16 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { roomsService } from '../../services/rooms';
+import { supabase } from '../../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 
 const RoomScreen = ({ route, navigation }) => {
   const { roomId } = route.params;
@@ -20,11 +21,71 @@ const RoomScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [leaving, setLeaving] = useState(false);
   const [activeTab, setActiveTab] = useState('room'); // 'room', 'chat', 'participants'
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     loadRoomDetails();
+    setupRealtimeSubscription();
+
+    return () => {
+      // Cleanup subscription when component unmounts
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
   }, [roomId]);
+
+  let subscription = null;
+
+  const setupRealtimeSubscription = () => {
+    subscription = supabase
+      .channel(`participacion:sala_id=eq.${roomId}`)
+      .on('postgres_changes', {
+        event: '*', // Listen to INSERT, UPDATE, DELETE
+        schema: 'public',
+        table: 'participacion',
+        filter: `sala_id=eq.${roomId}`
+      }, (payload) => {
+        updateParticipantsLocally(payload);
+      })
+      .subscribe();
+  };
+
+  const updateParticipantsLocally = (payload) => {
+    setRoomData(prev => {
+      if (!prev) return prev;
+      
+      let newParticipaciones = [...(prev.participacion || [])];
+      
+      switch (payload.eventType) {
+        case 'INSERT':
+          // Add new participant
+          if (payload.new && !newParticipaciones.find(p => p.id === payload.new.id)) {
+            newParticipaciones.push(payload.new);
+          }
+          break;
+          
+        case 'UPDATE':
+          // Update existing participant
+          const index = newParticipaciones.findIndex(p => p.id === payload.new.id);
+          if (index !== -1 && payload.new) {
+            newParticipaciones[index] = payload.new;
+          }
+          break;
+          
+        case 'DELETE':
+          // Remove participant
+          newParticipaciones = newParticipaciones.filter(p => p.id !== payload.old.id);
+          break;
+      }
+      
+      return {
+        ...prev,
+        participacion: newParticipaciones
+      };
+    });
+  };
 
   const loadRoomDetails = async () => {
     try {
@@ -39,37 +100,41 @@ const RoomScreen = ({ route, navigation }) => {
 
       setRoomData(data);
     } catch (error) {
-      Alert.alert('Error', 'Ocurrió un error al cargar la sala');
+      // TODO: Reemplazar con modal personalizado si es necesario
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLeaveRoom = async () => {
-    Alert.alert(
-      'Salir de la sala',
-      '¿Estás seguro de que quieres salir de esta sala?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Salir',
-          style: 'destructive',
-          onPress: async () => {
-            if (!user?.id) return;
+  const [isLeaving, setIsLeaving] = useState(false);
 
-            setLeaving(true);
-            const { data, error } = await roomsService.leaveRoom(roomId, user.id);
+  const handleLeaveRoom = () => {
+    if (isLeaving || leaving) {
+      return;
+    }
 
-            if (error) {
-              Alert.alert('Error', error.message);
-            } else {
-              navigation.goBack();
-            }
-            setLeaving(false);
-          },
-        },
-      ]
-    );
+    setShowLeaveModal(true);
+  };
+
+  const confirmLeaveRoom = async () => {
+    if (!user?.id) {
+      setShowLeaveModal(false);
+      return;
+    }
+
+    setLeaving(true);
+    const { data, error } = await roomsService.leaveRoom(roomId, user.id);
+
+    if (error) {
+      setLeaving(false);
+      setShowLeaveModal(false);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const cancelLeaveRoom = () => {
+    setShowLeaveModal(false);
   };
 
   if (loading) {
@@ -98,7 +163,9 @@ const RoomScreen = ({ route, navigation }) => {
     );
   }
 
-  const participantsCount = roomData.participacion?.length || 0;
+  const participantsCount = roomData.participacion?.filter(
+    p => p.estado_conexion === 'activo' && !p.esta_expulsado
+  ).length || 0;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -179,7 +246,9 @@ const RoomScreen = ({ route, navigation }) => {
 
         <TouchableOpacity
           style={styles.headerButton}
-          onPress={handleLeaveRoom}
+          onPress={() => {
+            handleLeaveRoom();
+          }}
           disabled={leaving}
         >
           {leaving ? (
@@ -239,6 +308,19 @@ const RoomScreen = ({ route, navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <ConfirmModal
+        visible={showLeaveModal}
+        title="Salir de la sala"
+        message="¿Estás seguro de que quieres salir de esta sala?"
+        confirmText="Salir"
+        cancelText="Cancelar"
+        onConfirm={confirmLeaveRoom}
+        onCancel={cancelLeaveRoom}
+        loading={leaving}
+        icon="exit-outline"
+        iconColor={COLORS.error}
+      />
     </LinearGradient>
   );
 };
