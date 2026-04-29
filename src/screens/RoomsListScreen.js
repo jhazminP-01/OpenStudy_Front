@@ -8,10 +8,13 @@ import {
   FlatList,
   ActivityIndicator,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import { roomsService } from '../services/rooms';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../hooks/useAuth';
 
 export default function RoomsListScreen({ navigation, route }) {
   const [rooms, setRooms] = useState([]);
@@ -20,6 +23,8 @@ export default function RoomsListScreen({ navigation, route }) {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [generalError, setGeneralError] = useState('');
+  const [joiningRoomId, setJoiningRoomId] = useState(null);
+  const { user } = useAuth();
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -80,6 +85,28 @@ export default function RoomsListScreen({ navigation, route }) {
     return matchSearch && matchMateria;
   });
 
+  const handleJoinRoom = async (roomId) => {
+    if (!user?.id) {
+      Alert.alert('Error', 'Debes iniciar sesión para unirte a una sala');
+      return;
+    }
+
+    setJoiningRoomId(roomId);
+    const { data, error } = await roomsService.joinRoom(roomId, user.id);
+
+    if (error) {
+      // Si ya estás en la sala, simplemente navegar a ella
+      if (error.message === 'Ya estás en esta sala') {
+        navigation.navigate('Room', { roomId });
+      } else {
+        Alert.alert('Error', error.message);
+      }
+    } else {
+      navigation.navigate('Room', { roomId });
+    }
+    setJoiningRoomId(null);
+  };
+
   const getStatusInfo = (estado) => {
     if (estado === 'activa') {
       return {
@@ -104,7 +131,7 @@ export default function RoomsListScreen({ navigation, route }) {
         icon: 'code-slash-outline',
         iconBoxStyle: styles.iconProgramming,
         buttonStyle: styles.buttonPurple,
-        color: '#A78BFA',
+        color: COLORS.subjects.programacion,
       };
     }
 
@@ -113,7 +140,7 @@ export default function RoomsListScreen({ navigation, route }) {
         icon: 'calculator-outline',
         iconBoxStyle: styles.iconMath,
         buttonStyle: styles.buttonGreen,
-        color: '#34D399',
+        color: COLORS.subjects.matematicas,
       };
     }
 
@@ -122,7 +149,7 @@ export default function RoomsListScreen({ navigation, route }) {
         icon: 'planet-outline',
         iconBoxStyle: styles.iconPhysics,
         buttonStyle: styles.buttonBlue,
-        color: '#60A5FA',
+        color: COLORS.subjects.fisica,
       };
     }
 
@@ -135,7 +162,7 @@ export default function RoomsListScreen({ navigation, route }) {
         icon: 'chatbubble-ellipses-outline',
         iconBoxStyle: styles.iconLanguage,
         buttonStyle: styles.buttonPink,
-        color: '#F472B6',
+        color: COLORS.subjects.ingles,
       };
     }
 
@@ -143,7 +170,7 @@ export default function RoomsListScreen({ navigation, route }) {
       icon: 'sparkles-outline',
       iconBoxStyle: styles.iconDefault,
       buttonStyle: styles.buttonPurple,
-      color: '#C084FC',
+      color: COLORS.subjects.baseDatos,
     };
   };
 
@@ -151,6 +178,8 @@ export default function RoomsListScreen({ navigation, route }) {
     const participantsCount = item.participacion?.length || 0;
     const statusInfo = getStatusInfo(item.estado);
     const theme = getCardTheme(item.materia?.nombre);
+    const isJoining = joiningRoomId === item.id;
+    const isFull = participantsCount >= item.capacidad_maxima;
 
     return (
       <View style={styles.card}>
@@ -188,20 +217,30 @@ export default function RoomsListScreen({ navigation, route }) {
 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <Ionicons name="people-outline" size={16} color="#C4B5FD" />
-            <Text style={styles.infoText}>
+            <Ionicons name="people-outline" size={16} color={COLORS.textRoomsTertiary} />
+            <Text style={[styles.infoText, isFull && styles.fullCapacityText]}>
               {participantsCount}/{item.capacidad_maxima} participantes
             </Text>
           </View>
 
           <View style={styles.infoItem}>
-            <Ionicons name="key-outline" size={16} color="#FACC15" />
+            <Ionicons name="key-outline" size={16} color={COLORS.iconCode} />
             <Text style={styles.infoText}>{item.codigo_invitacion}</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={[styles.enterButton, theme.buttonStyle]}>
-          <Text style={styles.enterButtonText}>Entrar →</Text>
+        <TouchableOpacity
+          style={[styles.enterButton, theme.buttonStyle, isFull && styles.enterButtonDisabled]}
+          onPress={() => handleJoinRoom(item.id)}
+          disabled={isJoining || isFull}
+        >
+          {isJoining ? (
+            <ActivityIndicator color={COLORS.textWhite} size="small" />
+          ) : (
+            <Text style={styles.enterButtonText}>
+              {isFull ? 'Sala llena' : 'Entrar →'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -209,7 +248,7 @@ export default function RoomsListScreen({ navigation, route }) {
 
   return (
     <LinearGradient
-      colors={['#4B1387', '#170531', '#070016']}
+      colors={COLORS.gradientRooms}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -233,7 +272,7 @@ export default function RoomsListScreen({ navigation, route }) {
                 </View>
 
                 <TouchableOpacity style={styles.notificationButton}>
-                  <Ionicons name="notifications" size={22} color="#FACC15" />
+                  <Ionicons name="notifications" size={22} color={COLORS.iconCode} />
                   <View style={styles.notificationDot} />
                 </TouchableOpacity>
               </View>
@@ -241,7 +280,7 @@ export default function RoomsListScreen({ navigation, route }) {
               <TextInput
                 style={styles.searchInput}
                 placeholder="Buscar salas de estudio..."
-                placeholderTextColor="#8D74B8"
+                placeholderTextColor={COLORS.placeholderTextColor}
                 value={search}
                 onChangeText={setSearch}
               />
@@ -284,7 +323,7 @@ export default function RoomsListScreen({ navigation, route }) {
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionLeft}>
                   <View style={styles.sectionIconContainer}>
-                    <Ionicons name="people" size={18} color="#C4B5FD" />
+                    <Ionicons name="people" size={18} color={COLORS.textRoomsTertiary} />
                   </View>
                   <Text style={styles.sectionTitle}>Salas disponibles</Text>
                 </View>
@@ -297,7 +336,7 @@ export default function RoomsListScreen({ navigation, route }) {
               {loading ? (
                 <ActivityIndicator
                   size="large"
-                  color="#C86CFF"
+                  color={COLORS.activityIndicator}
                   style={{ marginTop: 30, marginBottom: 20 }}
                 />
               ) : null}
@@ -322,7 +361,7 @@ export default function RoomsListScreen({ navigation, route }) {
         onPress={() => navigation.navigate('CreateRoom')}
       >
         <LinearGradient
-          colors={['#C86CFF', '#8B5CF6']}
+          colors={COLORS.gradientButton}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.createRoomButton}
@@ -349,17 +388,17 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingTop: 22,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingTop: SPACING.rooms.paddingTop,
+    paddingHorizontal: SPACING.rooms.paddingX,
+    paddingBottom: SPACING.rooms.paddingBottom,
   },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 18,
-    gap: 12,
+    marginBottom: SPACING.rooms.marginBottomLarge,
+    gap: SPACING.rooms.gapMedium,
   },
 
   headerTextBox: {
@@ -367,16 +406,15 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 6,
+    ...TYPOGRAPHY.rooms.title,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomSmall,
     flexShrink: 1,
   },
 
   subtitle: {
-    fontSize: 15,
-    color: '#D5C4F4',
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
     flexShrink: 1,
     lineHeight: 20,
   },
@@ -385,11 +423,11 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: COLORS.backgroundRoomsMedium,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.borderRoomsLight,
   },
 
   notificationIcon: {
@@ -403,29 +441,29 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FF5FA2',
+    backgroundColor: COLORS.error,
   },
 
   searchInput: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: COLORS.backgroundRoomsLight,
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 15,
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginBottom: 16,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
+    marginBottom: SPACING.rooms.marginBottomMedium,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
+    borderColor: COLORS.borderRoomsLight,
   },
 
   filtersContainer: {
-    paddingBottom: 18,
+    paddingBottom: SPACING.rooms.marginBottomLarge,
   },
 
   filterChip: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: COLORS.borderRoomsExtra,
     paddingHorizontal: 18,
     paddingVertical: 11,
     borderRadius: 22,
@@ -433,20 +471,20 @@ const styles = StyleSheet.create({
   },
 
   filterChipSelected: {
-    backgroundColor: '#A855F7',
-    borderColor: '#A855F7',
+    backgroundColor: COLORS.filterChipSelected,
+    borderColor: COLORS.filterChipSelected,
   },
 
   filterChipText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '600',
   },
 
   filterChipTextSelected: {
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
   },
-  
+
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,8 +495,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 10,
+    marginBottom: SPACING.rooms.marginBottomMedium,
+    gap: SPACING.rooms.gapMedium,
   },
 
   sectionLeft: {
@@ -471,7 +509,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    backgroundColor: COLORS.successIconBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -482,33 +520,32 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.rooms.sectionTitle,
+    color: COLORS.textWhite,
     flexShrink: 1,
   },
 
   sectionCount: {
-    fontSize: 14,
-    color: '#B97EFF',
+    ...TYPOGRAPHY.rooms.badge,
+    color: COLORS.textRoomsAccent,
     fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
   },
 
   card: {
-    backgroundColor: 'rgba(22, 10, 56, 0.84)',
-    borderRadius: 24,
+    backgroundColor: COLORS.cardRoomsBackground,
+    borderRadius: SPACING.borderRadiusRooms.card,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: SPACING.rooms.marginBottomMedium,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.borderRoomsLight,
     overflow: 'hidden',
   },
 
   cardHeaderRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: SPACING.rooms.marginBottomMedium,
   },
 
   iconBox: {
@@ -521,28 +558,28 @@ const styles = StyleSheet.create({
   },
 
   iconProgramming: {
-    backgroundColor: 'rgba(167,139,250,0.15)',
+    backgroundColor: COLORS.iconProgrammingBg,
   },
 
   iconMath: {
-    backgroundColor: 'rgba(52,211,153,0.15)',
+    backgroundColor: COLORS.iconMathBg,
   },
 
   iconPhysics: {
-    backgroundColor: 'rgba(96,165,250,0.15)',
+    backgroundColor: COLORS.iconPhysicsBg,
   },
 
   iconLanguage: {
-    backgroundColor: 'rgba(244,114,182,0.15)',
+    backgroundColor: COLORS.iconLanguageBg,
   },
 
   iconDefault: {
-    backgroundColor: 'rgba(192,132,252,0.15)',
+    backgroundColor: COLORS.iconDefaultBg,
   },
 
   iconText: {
     fontSize: 28,
-    color: '#D39BFF',
+    color: COLORS.iconText,
     fontWeight: '700',
   },
 
@@ -553,18 +590,18 @@ const styles = StyleSheet.create({
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: SPACING.rooms.marginBottomSmall,
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.rooms.gapMedium,
   },
 
   categoryBadge: {
-    backgroundColor: 'rgba(168, 85, 247, 0.18)',
-    color: '#C483FF',
+    backgroundColor: COLORS.successIconBg,
+    color: COLORS.textRoomsTertiary,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 12,
-    fontSize: 12,
+    ...TYPOGRAPHY.rooms.badge,
     fontWeight: '700',
     overflow: 'hidden',
     flexShrink: 1,
@@ -577,51 +614,50 @@ const styles = StyleSheet.create({
   },
 
   statusActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.16)',
+    backgroundColor: COLORS.statusActiveBg,
   },
 
   statusPaused: {
-    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+    backgroundColor: COLORS.statusPausedBg,
   },
 
   statusText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.rooms.badge,
     fontWeight: '700',
   },
 
   statusActiveText: {
-    color: '#5EF2B0',
+    color: COLORS.statusActive,
   },
 
   statusPausedText: {
-    color: '#FFBF47',
+    color: COLORS.statusPaused,
   },
 
   roomTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    ...TYPOGRAPHY.rooms.cardTitle,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomSmall,
   },
 
   roomDescription: {
-    fontSize: 14,
-    color: '#D0C2EF',
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsMuted,
     lineHeight: 21,
   },
 
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: SPACING.rooms.marginBottomMedium,
     paddingTop: 4,
-    gap: 10,
+    gap: SPACING.rooms.gapMedium,
     flexWrap: 'wrap',
   },
 
   infoText: {
-    fontSize: 14,
-    color: '#D0C2EF',
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsMuted,
     flexShrink: 1,
   },
 
@@ -632,25 +668,33 @@ const styles = StyleSheet.create({
   },
 
   buttonPurple: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: COLORS.buttonPurple,
   },
 
   buttonGreen: {
-    backgroundColor: '#1FA46F',
+    backgroundColor: COLORS.buttonGreen,
   },
 
   buttonBlue: {
-    backgroundColor: '#4F7DF3',
+    backgroundColor: COLORS.buttonBlue,
   },
 
   buttonPink: {
-    backgroundColor: '#D94D91',
+    backgroundColor: COLORS.buttonPink,
   },
 
   enterButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '700',
+  },
+
+  enterButtonDisabled: {
+    opacity: 0.5,
+  },
+
+  fullCapacityText: {
+    color: COLORS.error,
   },
 
   createRoomButtonWrapper: {
@@ -666,7 +710,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#C084FC',
+    shadowColor: COLORS.shadowRooms,
     shadowOpacity: 0.35,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -674,23 +718,23 @@ const styles = StyleSheet.create({
   },
 
   createRoomButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '700',
   },
 
   errorText: {
-    color: '#FFB3C8',
+    color: COLORS.textRoomsError,
     textAlign: 'center',
-    marginTop: 18,
-    marginBottom: 18,
+    marginTop: SPACING.rooms.marginBottomLarge,
+    marginBottom: SPACING.rooms.marginBottomLarge,
   },
 
   emptyText: {
-    color: '#D5C4F4',
+    color: COLORS.textRoomsSecondary,
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    fontSize: 15,
+    marginTop: SPACING.rooms.marginBottomLarge,
+    marginBottom: SPACING.rooms.marginBottomLarge,
+    ...TYPOGRAPHY.body,
   },
 });

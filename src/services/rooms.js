@@ -107,4 +107,98 @@ export const roomsService = {
 
     return { data, error };
   },
+
+  // Unirse a una sala
+  joinRoom: async (roomId, userId) => {
+    // 1. Verificar que la sala existe y está activa
+    const { data: room, error: roomError } = await supabase
+      .from('sala')
+      .select('*')
+      .eq('id', roomId)
+      .eq('estado', 'activa')
+      .single();
+
+    if (roomError || !room) {
+      return { data: null, error: { message: 'La sala no existe o no está activa' } };
+    }
+
+    // 2. Verificar que el usuario no ya está en la sala
+    const { data: existingParticipations, error: checkError } = await supabase
+      .from('participacion')
+      .select('*')
+      .eq('sala_id', roomId)
+      .eq('usuario_id', userId)
+      .eq('estado_conexion', 'activo')
+      .eq('esta_expulsado', false)
+      .limit(1);
+
+    const existingParticipation = existingParticipations && existingParticipations.length > 0 ? existingParticipations[0] : null;
+
+    if (existingParticipation) {
+      return { data: null, error: { message: 'Ya estás en esta sala' } };
+    }
+
+    // 3. Verificar capacidad máxima
+    const { data: participants, error: countError } = await supabase
+      .from('participacion')
+      .select('id')
+      .eq('sala_id', roomId)
+      .eq('estado_conexion', 'activo')
+      .eq('esta_expulsado', false);
+
+    const currentParticipants = participants?.length || 0;
+
+    if (currentParticipants >= room.capacidad_maxima) {
+      return { data: null, error: { message: 'La sala está llena' } };
+    }
+
+    // 4. Insertar en participacion
+    const { data, error } = await supabase
+      .from('participacion')
+      .insert({
+        usuario_id: userId,
+        sala_id: roomId,
+        rol: 'participante',
+        estado_conexion: 'activo',
+        esta_expulsado: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: room, error: null };
+  },
+
+  // Salir de una sala
+  leaveRoom: async (roomId, userId) => {
+    // 1. Verificar que el usuario está en la sala
+    const { data: participations, error: checkError } = await supabase
+      .from('participacion')
+      .select('*')
+      .eq('sala_id', roomId)
+      .eq('usuario_id', userId)
+      .eq('estado_conexion', 'activo')
+      .limit(1);
+
+    const participation = participations && participations.length > 0 ? participations[0] : null;
+
+    if (!participation) {
+      return { data: null, error: { message: 'No estás en esta sala' } };
+    }
+
+    // 2. Actualizar estado de conexión a inactivo
+    const { error } = await supabase
+      .from('participacion')
+      .update({ estado_conexion: 'inactivo' })
+      .eq('id', participation.id);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: { success: true }, error: null };
+  },
 };

@@ -1,11 +1,13 @@
 import React from 'react';
-import { Text } from 'react-native';
-import { View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import RoomsListScreen from '../screens/RoomsListScreen';
 import RoomCreatedScreen from '../screens/RoomCreatedScreen';
+import RoomScreen from '../screens/room/RoomScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 // Screens
 import HomeScreen from '../screens/profile/HomeScreen';
 import CreateRoomScreen from '../screens/CreateRoomScreen';
@@ -27,6 +29,10 @@ const RoomsStack = () => (
     <Stack.Screen 
       name="RoomCreated" 
       component={RoomCreatedScreen}
+    />
+    <Stack.Screen 
+      name="Room" 
+      component={RoomScreen}
     />
   </Stack.Navigator>
 );
@@ -54,57 +60,34 @@ export const TabNavigator = () => {
           return <Ionicons name={iconName} size={22} color={color} />;
         },
 
-        tabBarActiveTintColor: '#D7A8FF',
-        tabBarInactiveTintColor: '#B8A9D6',
+        tabBarActiveTintColor: COLORS.textRoomsSecondaryButton,
+        tabBarInactiveTintColor: COLORS.textRoomsTertiary,
         headerShown: false,
 
-        tabBarStyle: {
-          position: 'absolute',
-          left: 12,
-          right: 12,
-          bottom: 12,
-          height: 70,
-          borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.10)',
-          backgroundColor: '#160A38',
-          borderRadius: 24,
-          paddingTop: 8,
-          paddingBottom: 8,
-          elevation: 0,
-        },
+        tabBarStyle: styles.tabBar,
 
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-          marginTop: 2,
-        },
+        tabBarLabelStyle: styles.tabBarLabel,
 
-        tabBarItemStyle: {
-          borderRadius: 18,
-          marginHorizontal: 6,
-        },
+        tabBarItemStyle: styles.tabBarItem,
 
         tabBarBackground: () => (
-          <View
-            style={{
-              flex: 1,
-              borderRadius: 24,
-              backgroundColor: '#160A38',
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.08)',
-              shadowColor: '#C084FC',
-              shadowOpacity: 0.12,
-              shadowRadius: 14,
-              shadowOffset: { width: 0, height: 4 },
-            }}
-          />
+          <View style={styles.tabBarBackground} />
         ),
       })}
     >
       <Tab.Screen
         name="Rooms"
         component={RoomsStack}
-        options={{ title: 'Salas' }}
+        options={({ route }) => ({
+          title: 'Salas',
+          tabBarStyle: ((route) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'RoomsList';
+            if (routeName === 'Room') {
+              return { display: 'none' };
+            }
+            return styles.tabBar;
+          })(route),
+        })}
       />
       <Tab.Screen
         name="Profile"
@@ -114,3 +97,40 @@ export const TabNavigator = () => {
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    left: SPACING.md,
+    right: SPACING.md,
+    bottom: SPACING.md,
+    height: 70,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderRoomsMedium,
+    backgroundColor: COLORS.backgroundDark,
+    borderRadius: SPACING.borderRadius['2xl'],
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    elevation: 0,
+  },
+  tabBarLabel: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    fontWeight: TYPOGRAPHY.caption.fontWeight,
+    marginTop: 2,
+  },
+  tabBarItem: {
+    borderRadius: 18,
+    marginHorizontal: 6,
+  },
+  tabBarBackground: {
+    flex: 1,
+    borderRadius: SPACING.borderRadius['2xl'],
+    backgroundColor: COLORS.backgroundDark,
+    borderWidth: 1,
+    borderColor: COLORS.borderRoomsLight,
+    shadowColor: COLORS.shadowRooms,
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+  },
+});

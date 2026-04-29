@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { COLORS } from '../../styles/colors';
+import { COLORS, SPACING } from '../../styles';
 
 const Card = ({ children, style }) => {
   return (
@@ -13,10 +13,10 @@ const Card = ({ children, style }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.backgroundCard,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
+    borderRadius: SPACING.borderRadius.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    shadowColor: COLORS.shadowDefault,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

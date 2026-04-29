@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -12,7 +13,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
   return (
   <LinearGradient
-    colors={['#4B1387', '#170531', '#070016']}
+    colors={COLORS.gradientRooms}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 1 }}
     style={styles.container}
@@ -25,7 +26,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
       ]}
     >
       <View style={styles.successIcon}>
-        <Ionicons name="checkmark-circle" size={82} color="#D8B4FE" />
+        <Ionicons name="checkmark-circle" size={82} color={COLORS.iconSuccess} />
       </View>
 
       <Text style={styles.title}>¡Sala creada!</Text>
@@ -35,7 +36,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
         <MaterialCommunityIcons
           name="robot-happy"
           size={17}
-          color="#D8B4FE"
+          color={COLORS.iconSuccess}
           style={{ marginLeft: 6 }}
         />
       </View>
@@ -45,7 +46,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
         <View style={styles.row}>
           <View style={styles.labelRow}>
-            <Ionicons name="book-outline" size={16} color="#C4B5FD" />
+            <Ionicons name="book-outline" size={16} color={COLORS.textRoomsTertiary} />
             <Text style={styles.label}>Categoría</Text>
           </View>
           <View style={styles.badge}>
@@ -55,7 +56,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
         <View style={styles.row}>
           <View style={styles.labelRow}>
-            <Ionicons name="people-outline" size={16} color="#C4B5FD" />
+            <Ionicons name="people-outline" size={16} color={COLORS.textRoomsTertiary} />
             <Text style={styles.label}>Participantes</Text>
           </View>
           <Text style={styles.value}>0/{sala?.capacidad_maxima || 0}</Text>
@@ -63,7 +64,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
         <View style={styles.row}>
           <View style={styles.labelRow}>
-            <Ionicons name="key-outline" size={16} color="#FACC15" />
+            <Ionicons name="key-outline" size={16} color={COLORS.iconCode} />
             <Text style={styles.label}>Código</Text>
           </View>
           <Text style={styles.value}>{sala?.codigo_invitacion || '------'}</Text>
@@ -75,7 +76,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
         onPress={() => navigation.navigate('RoomsList', { refresh: true })}
       >
         <LinearGradient
-          colors={['#C86CFF', '#8B5CF6']}
+          colors={COLORS.gradientButton}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.primaryButton}
@@ -96,14 +97,15 @@ export default function RoomCreatedScreen({ navigation, route }) {
   </LinearGradient>
 );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
 
   content: {
-    paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingHorizontal: SPACING.rooms.paddingX,
+    paddingBottom: SPACING.rooms.paddingBottom,
   },
 
   successIcon: {
@@ -113,11 +115,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 22,
-    backgroundColor: 'rgba(139, 92, 246, 0.18)',
+    marginBottom: SPACING.rooms.marginBottomLarge,
+    backgroundColor: COLORS.successIconBg,
     borderWidth: 1,
-    borderColor: 'rgba(216, 180, 254, 0.18)',
-    shadowColor: '#C084FC',
+    borderColor: COLORS.successIconBorder,
+    shadowColor: COLORS.shadowRooms,
     shadowOpacity: 0.28,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -125,47 +127,45 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    ...TYPOGRAPHY.rooms.title,
+    color: COLORS.textWhite,
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: SPACING.rooms.marginBottomSmall,
   },
 
   subtitleRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.rooms.marginBottomLarge,
   },
 
   subtitle: {
-    color: '#D5C4F4',
-    fontSize: 15,
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
     textAlign: 'center',
   },
 
   card: {
-    backgroundColor: 'rgba(22, 10, 56, 0.86)',
-    borderRadius: 24,
+    backgroundColor: COLORS.cardRoomsBackground,
+    borderRadius: SPACING.borderRadiusRooms.card,
     padding: 18,
-    marginBottom: 22,
+    marginBottom: SPACING.rooms.marginBottomLarge,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.borderRoomsLight,
   },
 
   roomName: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 18,
+    ...TYPOGRAPHY.rooms.cardTitle,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomMedium,
   },
 
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: SPACING.rooms.marginBottomMedium,
   },
 
   labelRow: {
@@ -174,32 +174,32 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    color: '#D5C4F4',
-    fontSize: 14,
+    color: COLORS.textRoomsSecondary,
+    ...TYPOGRAPHY.body,
     marginLeft: 7,
   },
 
   value: {
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
     fontWeight: '800',
-    fontSize: 14,
+    ...TYPOGRAPHY.body,
   },
 
   badge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: COLORS.buttonPurple,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
   },
 
   badgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.rooms.badge,
     fontWeight: '700',
   },
 
   primaryButtonWrapper: {
-    marginBottom: 12,
+    marginBottom: SPACING.rooms.marginBottomMedium,
   },
 
   primaryButton: {
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#C084FC',
+    shadowColor: COLORS.shadowRooms,
     shadowOpacity: 0.3,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
   },
 
   primaryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '800',
   },
 
@@ -225,13 +225,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(216, 180, 254, 0.45)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: COLORS.secondaryButtonBorder,
+    backgroundColor: COLORS.backgroundRoomsLight,
   },
 
   secondaryText: {
-    color: '#D8B4FE',
-    fontSize: 15,
+    color: COLORS.textRoomsTertiary,
+    ...TYPOGRAPHY.body,
     fontWeight: '700',
   },
 });

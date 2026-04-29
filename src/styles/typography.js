@@ -69,6 +69,10 @@ export const TYPOGRAPHY = {
       fontSize: 28,
       fontWeight: FONTS.weights.extrabold,
     },
+    cardTitle: {
+      fontSize: 20,
+      fontWeight: FONTS.weights.bold,
+    },
     roomTitle: {
       fontSize: 19,
       fontWeight: FONTS.weights.bold,

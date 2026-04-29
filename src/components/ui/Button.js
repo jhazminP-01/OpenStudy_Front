@@ -37,7 +37,7 @@ const Button = ({
       activeOpacity={0.7}
     >
       {isLoading ? (
-        <ActivityIndicator color={variant === 'outline' ? COLORS.textWhite : COLORS.textWhite} />
+        <ActivityIndicator color={COLORS.textWhite} />
       ) : (
         <Text style={textStyles}>{title}</Text>
       )}
@@ -47,12 +47,12 @@ const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    height: 56,
+    height: SPACING.sizes.button.lg.height,
     borderRadius: SPACING.borderRadiusRooms.button,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.filterChipSelected,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
     width: '100%',
   },
   buttonSecondary: {

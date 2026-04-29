@@ -7,13 +7,11 @@ import {
   ScrollView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, TYPOGRAPHY } from '../../styles';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { authService } from '../../services/auth';
 import { useAuth } from '../../hooks/useAuth';
 
 import { Card, Button } from '../../components/ui';
-
-import { homeStyles as styles } from '../../styles/authStyles';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -71,5 +69,69 @@ const HomeScreen = ({ navigation }) => {
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    padding: SPACING.xl,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.rooms.title,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomSmall,
+  },
+  headerSubtitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textWhite,
+    opacity: 0.9,
+  },
+  content: {
+    padding: SPACING.md,
+  },
+  userInfo: {
+    marginBottom: SPACING.md,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  infoLabel: {
+    ...TYPOGRAPHY.body,
+    fontWeight: TYPOGRAPHY.h3.fontWeight,
+    color: COLORS.text,
+  },
+  infoValue: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
+  },
+  statusActive: {
+    color: COLORS.success,
+    fontWeight: TYPOGRAPHY.h3.fontWeight,
+  },
+  section: {
+    marginBottom: SPACING.md,
+  },
+  sectionTitle: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  sectionText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
+    lineHeight: 24,
+  },
+  logoutButton: {
+    marginTop: SPACING.md,
+  },
+});
 
 export default HomeScreen;

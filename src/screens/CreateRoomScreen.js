@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import { supabase } from '../../lib/supabase';
 import { roomsService } from '../services/rooms';
 import { validateCreateRoom } from '../utils/roomValidators';
@@ -104,7 +105,7 @@ export default function CreateRoomScreen({ navigation }) {
 
   return (
     <LinearGradient
-      colors={['#4B1387', '#170531', '#070016']}
+      colors={COLORS.gradientRooms}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -117,7 +118,7 @@ export default function CreateRoomScreen({ navigation }) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={22} color={COLORS.iconBack} />
         </TouchableOpacity>
 
         <Text style={styles.title}>Crear sala</Text>
@@ -130,7 +131,7 @@ export default function CreateRoomScreen({ navigation }) {
             <MaterialCommunityIcons
               name="robot-happy"
               size={16}
-              color="#C084FC"
+              color={COLORS.iconRobot}
             />
           </View>
         </View>
@@ -143,7 +144,7 @@ export default function CreateRoomScreen({ navigation }) {
         <TextInput
           style={[styles.input, errors.nombre && styles.inputError]}
           placeholder="Ej. Sala Pomodoro de Programación"
-          placeholderTextColor="#8D74B8"
+          placeholderTextColor={COLORS.placeholderTextColor}
           value={nombre}
           onChangeText={(text) => {
             setNombre(text);
@@ -158,7 +159,7 @@ export default function CreateRoomScreen({ navigation }) {
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Describe el objetivo de la sala"
-          placeholderTextColor="#8D74B8"
+          placeholderTextColor={COLORS.placeholderTextColor}
           value={descripcion}
           onChangeText={setDescripcion}
           multiline
@@ -167,7 +168,7 @@ export default function CreateRoomScreen({ navigation }) {
         <Text style={styles.label}>Materia *</Text>
 
         {loadingMaterias ? (
-          <ActivityIndicator color="#C86CFF" style={{ marginVertical: 14 }} />
+          <ActivityIndicator color={COLORS.activityIndicator} style={{ marginVertical: 14 }} />
         ) : (
           <View style={styles.chipsContainer}>
             {materias.map((item) => {
@@ -201,7 +202,7 @@ export default function CreateRoomScreen({ navigation }) {
         <TextInput
           style={[styles.input, errors.capacidad_maxima && styles.inputError]}
           placeholder="Entre 2 y 50"
-          placeholderTextColor="#8D74B8"
+          placeholderTextColor={COLORS.placeholderTextColor}
           value={capacidadMaxima}
           onChangeText={(text) => {
             setCapacidadMaxima(text.replace(/[^0-9]/g, ''));
@@ -221,13 +222,13 @@ export default function CreateRoomScreen({ navigation }) {
           disabled={loading || loadingMaterias}
         >
           <LinearGradient
-            colors={['#C86CFF', '#8B5CF6']}
+            colors={COLORS.gradientButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.button}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={COLORS.activityIndicatorWhite} />
             ) : (
               <Text style={styles.buttonText}>Crear sala</Text>
             )}
@@ -246,62 +247,61 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    padding: 20,
-    paddingTop: 28,
+    padding: SPACING.rooms.paddingX,
+    paddingTop: SPACING.rooms.paddingTop,
   },
 
   backButton: {
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: COLORS.backgroundRoomsMedium,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: SPACING.rooms.marginBottomMedium,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.borderRoomsLight,
   },
 
   title: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '700',
-    marginBottom: 6,
+    ...TYPOGRAPHY.rooms.title,
+    color: COLORS.textWhite,
+    marginBottom: SPACING.rooms.marginBottomSmall,
   },
   
   subtitle: {
-    color: '#D5C4F4',
-    fontSize: 15,
+    ...TYPOGRAPHY.body,
+    color: COLORS.textRoomsSecondary,
     lineHeight: 21,
   },
 
   subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 22,
+    marginBottom: SPACING.rooms.marginBottomLarge,
   },
 
   label: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '700',
-    marginBottom: 8,
-    marginTop: 14,
+    marginBottom: SPACING.rooms.marginBottomSmall,
+    marginTop: SPACING.rooms.marginBottomMedium,
   },
 
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.backgroundRoomsMedium,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: COLORS.borderRoomsMedium,
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
   },
 
   inputError: {
-    borderColor: '#FF80A8',
+    borderColor: COLORS.errorBorder,
   },
 
   textArea: {
@@ -312,32 +312,32 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: SPACING.rooms.gapMedium,
     marginTop: 4,
   },
 
   chip: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
+    borderColor: COLORS.borderRoomsExtra,
     borderRadius: 22,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.backgroundRoomsLight,
   },
 
   chipSelected: {
-    backgroundColor: '#A855F7',
-    borderColor: '#A855F7',
+    backgroundColor: COLORS.filterChipSelected,
+    borderColor: COLORS.filterChipSelected,
   },
 
   chipText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '600',
   },
 
   chipTextSelected: {
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
   },
   
   robotContainer: {
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   },
 
   buttonWrapper: {
-    marginTop: 28,
+    marginTop: SPACING.rooms.marginBottomLarge,
   },
 
   button: {
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#C084FC',
+    shadowColor: COLORS.shadowRooms,
     shadowOpacity: 0.3,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -364,24 +364,24 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
     fontWeight: '700',
   },
 
   errorText: {
-    color: '#FFB3C8',
-    marginTop: 6,
-    fontSize: 13,
+    color: COLORS.textRoomsError,
+    marginTop: SPACING.rooms.marginBottomSmall,
+    ...TYPOGRAPHY.rooms.badge,
   },
 
   generalError: {
-    color: '#FFB3C8',
-    backgroundColor: 'rgba(255, 128, 168, 0.10)',
+    color: COLORS.textRoomsError,
+    backgroundColor: COLORS.errorBg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 128, 168, 0.25)',
+    borderColor: COLORS.errorBorderLight,
     borderRadius: 14,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: SPACING.rooms.marginBottomMedium,
   },
 });

@@ -84,6 +84,7 @@ export const COLORS = {
   // Sombras
   shadow: 'rgba(139, 92, 246, 0.1)',
   shadowRooms: '#C084FC',
+  shadowDefault: '#000',
   
   // Colores especiales de rooms
   iconCode: '#FACC15',
@@ -92,6 +93,22 @@ export const COLORS = {
   buttonGreen: '#1FA46F',
   buttonBlue: '#4F7DF3',
   buttonPink: '#D94D91',
+
+  // Colores para placeholders e iconos inline
+  placeholderTextColor: '#8D74B8',
+  iconBack: '#FFFFFF',
+  iconSuccess: '#D8B4FE',
+  iconRobot: '#C084FC',
+  activityIndicator: '#C86CFF',
+  activityIndicatorWhite: '#FFFFFF',
+
+  // Colores para icon backgrounds (semitransparentes)
+  iconProgrammingBg: 'rgba(167,139,250,0.15)',
+  iconMathBg: 'rgba(52,211,153,0.15)',
+  iconPhysicsBg: 'rgba(96,165,250,0.15)',
+  iconLanguageBg: 'rgba(244,114,182,0.15)',
+  iconDefaultBg: 'rgba(192,132,252,0.15)',
+  iconText: '#D39BFF',
   
   // Bordes
   border: '#E5E7EB',

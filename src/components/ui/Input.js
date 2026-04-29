@@ -5,7 +5,7 @@ import {
   TextInput, 
   StyleSheet 
 } from 'react-native';
-import { COLORS } from '../../styles/colors';
+import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 
 const Input = ({ 
   label, 
@@ -38,23 +38,22 @@ const Input = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: SPACING.md,
     width: '100%',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.label,
     color: COLORS.textWhite,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   input: {
-    height: 50,
+    height: SPACING.sizes.input.md.height,
     backgroundColor: COLORS.inputBackground,
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
+    borderRadius: SPACING.borderRadius.md,
+    paddingHorizontal: SPACING.sizes.input.md.paddingHorizontal,
+    ...TYPOGRAPHY.body,
     color: COLORS.textWhite,
   },
   inputError: {
@@ -62,8 +61,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.error,
-    fontSize: 12,
-    marginTop: 4,
+    ...TYPOGRAPHY.caption,
+    marginTop: SPACING.xs,
   },
 });
 
