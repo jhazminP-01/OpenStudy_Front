@@ -33,19 +33,8 @@ export const roomsService = {
 
       const { data, error } = await query;
 
-      // Filtrar solo participaciones activas y no expulsadas
-      if (data) {
-        data.forEach(room => {
-          if (room.participacion) {
-            room.participacion = room.participacion.filter(
-              p => p.estado_conexion === 'activo' && !p.esta_expulsado
-            );
-          }
-        });
-      }
-
       return { data, error };
-    },
+  },
 
   // Obtener materias
   getMaterias: async () => {
@@ -238,5 +227,48 @@ export const roomsService = {
     }
 
     return { data: { success: true }, error: null };
+  },
+
+  // Obtener participantes de una sala
+  getParticipants: async (roomId) => {
+    // 1. Obtener participaciones de la sala
+    const { data: participaciones, error: participacionesError } = await supabase
+      .from('participacion')
+      .select('id, usuario_id, rol, estado_conexion, esta_expulsado, fecha_ingreso')
+      .eq('sala_id', roomId)
+      .eq('esta_expulsado', false)
+      .order('fecha_ingreso', { ascending: true });
+
+    if (participacionesError) {
+      return { data: null, error: participacionesError };
+    }
+
+    if (!participaciones || participaciones.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // 2. Obtener IDs de usuarios
+    const usuarioIds = participaciones.map(p => p.usuario_id);
+
+    // 3. Obtener datos de usuarios
+    const { data: usuarios, error: usuariosError } = await supabase
+      .from('usuario')
+      .select('id, nombre_completo')
+      .in('id', usuarioIds);
+
+    if (usuariosError) {
+      return { data: null, error: usuariosError };
+    }
+
+    // 4. Unir datos en JavaScript
+    const participants = participaciones.map(p => {
+      const usuario = usuarios?.find(u => u.id === p.usuario_id);
+      return {
+        ...p,
+        nombre_completo: usuario?.nombre_completo || 'Usuario',
+      };
+    });
+
+    return { data: participants, error: null };
   },
 };

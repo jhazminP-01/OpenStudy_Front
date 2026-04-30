@@ -13,6 +13,7 @@ import { roomsService } from '../../services/rooms';
 import { supabase } from '../../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import ParticipantsScreen from './ParticipantsScreen';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 
 const RoomScreen = ({ route, navigation }) => {
@@ -218,13 +219,7 @@ const RoomScreen = ({ route, navigation }) => {
           </View>
         );
       case 'participants':
-        return (
-          <View style={styles.tabContent}>
-            <Text style={styles.placeholderTextCenter}>
-              La lista de participantes estará disponible en la próxima actualización (HU-06).
-            </Text>
-          </View>
-        );
+        return <ParticipantsScreen route={{ params: { roomId } }} />;
       default:
         return null;
     }
