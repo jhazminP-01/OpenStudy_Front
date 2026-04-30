@@ -159,8 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     borderColor: COLORS.borderRoomsLight,
-    height: 56,
-    minWidth: 140,
   },
 
   cancelButtonText: {
@@ -191,18 +189,12 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 16,
     shadowColor: COLORS.shadowRooms,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
-  },
-
-  confirmButtonText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textWhite,
-    fontWeight: '700',
   },
 });
 
