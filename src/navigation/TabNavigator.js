@@ -6,6 +6,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import RoomsListScreen from '../screens/RoomsListScreen';
 import RoomCreatedScreen from '../screens/RoomCreatedScreen';
 import RoomScreen from '../screens/room/RoomScreen';
+import RoomDetailsScreen from '../screens/room/RoomDetailsScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 // Screens
@@ -33,6 +34,10 @@ const RoomsStack = () => (
     <Stack.Screen 
       name="Room" 
       component={RoomScreen}
+    />
+    <Stack.Screen 
+      name="RoomDetails" 
+      component={RoomDetailsScreen}
     />
   </Stack.Navigator>
 );

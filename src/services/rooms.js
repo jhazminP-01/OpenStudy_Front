@@ -117,7 +117,15 @@ export const roomsService = {
       .eq('id', roomId)
       .single();
 
-    return { data, error };
+    if (error || !data) {
+      return { data, error };
+    }
+
+    // Por ahora, no obtenemos datos del creador ni de usuarios
+    // ya que la tabla 'usuario' no existe en la base de datos
+    // Usaremos solo los datos básicos de participaciones
+
+    return { data, error: null };
   },
 
   // Unirse a una sala

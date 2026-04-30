@@ -16,6 +16,7 @@ import { roomsService } from '../services/rooms';
 import { supabase } from '../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
+import ModalRoomDetails from '../components/ui/ModalRoomDetails';
 
 export default function RoomsListScreen({ navigation, route }) {
   const [rooms, setRooms] = useState([]);
@@ -25,6 +26,8 @@ export default function RoomsListScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [generalError, setGeneralError] = useState('');
   const [joiningRoomId, setJoiningRoomId] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
   const { user } = useAuth();
 
   const { width } = useWindowDimensions();
@@ -130,7 +133,6 @@ export default function RoomsListScreen({ navigation, route }) {
     setupRealtimeSubscription();
 
     return () => {
-      // Cleanup subscription when component unmounts
       if (subscription) {
         supabase.removeChannel(subscription);
       }
@@ -155,6 +157,16 @@ export default function RoomsListScreen({ navigation, route }) {
     return matchSearch && matchMateria;
   });
 
+  const handleViewDetails = (roomId) => {
+    setSelectedRoomId(roomId);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedRoomId(null);
+  };
+
   const handleJoinRoom = async (roomId) => {
     if (!user?.id) {
       Alert.alert('Error', 'Debes iniciar sesión para unirte a una sala');
@@ -165,7 +177,6 @@ export default function RoomsListScreen({ navigation, route }) {
     const { data, error } = await roomsService.joinRoom(roomId, user.id);
 
     if (error) {
-      // Si ya estás en la sala, simplemente navegar a ella
       if (error.message === 'Ya estás en esta sala') {
         navigation.navigate('Room', { roomId });
       } else {
@@ -254,7 +265,11 @@ export default function RoomsListScreen({ navigation, route }) {
     const isFull = participantsCount >= item.capacidad_maxima;
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => handleViewDetails(item.id)}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardHeaderRow}>
           <View style={[styles.iconBox, theme.iconBoxStyle]}>
             <Ionicons
@@ -310,11 +325,11 @@ export default function RoomsListScreen({ navigation, route }) {
             <ActivityIndicator color={COLORS.textWhite} size="small" />
           ) : (
             <Text style={styles.enterButtonText}>
-              {isFull ? 'Sala llena' : 'Entrar →'}
+              {isFull ? 'Sala llena' : 'Entrar'}
             </Text>
           )}
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -441,6 +456,13 @@ export default function RoomsListScreen({ navigation, route }) {
           <Text style={styles.createRoomButtonText}>＋ Crear sala</Text>
         </LinearGradient>
       </TouchableOpacity>
+
+      {/* Modal de detalles */}
+      <ModalRoomDetails
+        visible={modalVisible}
+        roomId={selectedRoomId}
+        onClose={handleCloseModal}
+      />
     </LinearGradient>
   );
 }
@@ -502,10 +524,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderRoomsLight,
   },
 
-  notificationIcon: {
-    fontSize: 22,
-  },
-
   notificationDot: {
     position: 'absolute',
     top: 11,
@@ -553,16 +571,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  filterChipTextSelected: {
-    color: COLORS.textWhite,
-  },
-
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -585,10 +593,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
-  },
-
-  sectionIcon: {
-    fontSize: 18,
   },
 
   sectionTitle: {
@@ -647,12 +651,6 @@ const styles = StyleSheet.create({
 
   iconDefault: {
     backgroundColor: COLORS.iconDefaultBg,
-  },
-
-  iconText: {
-    fontSize: 28,
-    color: COLORS.iconText,
-    fontWeight: '700',
   },
 
   cardContent: {
@@ -725,6 +723,12 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     gap: SPACING.rooms.gapMedium,
     flexWrap: 'wrap',
+  },
+
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 
   infoText: {
