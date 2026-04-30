@@ -168,7 +168,7 @@ const RoomScreen = ({ route, navigation }) => {
           />
         );
       case 'chat':
-        return <ChatTab />;
+        return <ChatTab roomId={roomId} />;
       case 'participants':
         return <ParticipantsScreen route={{ params: { roomId } }} />;
       default:

@@ -133,9 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundDark,
     borderWidth: 1,
     borderColor: COLORS.borderRoomsLight,
-    shadowColor: COLORS.shadowRooms,
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: '0px 4px 14px rgba(0, 0, 0, 0.12)',
+    style: { pointerEvents: 'none' },
   },
 });

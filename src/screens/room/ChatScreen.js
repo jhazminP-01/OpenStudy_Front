@@ -1,30 +1,176 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { COLORS } from '../../styles';
+import { messagesService } from '../../services/messages';
+import { useAuth } from '../../hooks/useAuth';
+import {
+  MessageList,
+  MessageInput,
+  TypingIndicator,
+} from '../../components/ui/Chat';
 
-const ChatScreen = () => {
+const ChatScreen = ({ route }) => {
+  const { roomId } = route.params;
+  const { user } = useAuth();
+
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const subscriptionRef = useRef(null);
+
+  // Cargar mensajes iniciales
+  const loadMessages = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await messagesService.getMessages(roomId, 50);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+
+      setMessages(data);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [roomId]);
+
+  // Configurar suscripción realtime
+  const setupRealtimeSubscription = useCallback(() => {
+    subscriptionRef.current = messagesService.subscribeToMessages(
+      roomId,
+      (payload) => {
+        handleRealtimeUpdate(payload);
+      }
+    );
+  }, [roomId]);
+
+  // Manejar actualizaciones en tiempo real
+  const handleRealtimeUpdate = (payload) => {
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+
+    switch (eventType) {
+      case 'INSERT':
+        // Agregar nuevo mensaje si no existe
+        setMessages((prev) => {
+          const exists = prev.some((msg) => msg.id === newRecord.id);
+          if (exists) return prev;
+          return [...prev, newRecord];
+        });
+        break;
+
+      case 'UPDATE':
+        // Actualizar mensaje existente
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newRecord.id ? { ...msg, ...newRecord } : msg
+          )
+        );
+        break;
+
+      case 'DELETE':
+        // Marcar mensaje como censurado
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === oldRecord.id ? { ...msg, censurado: true } : msg
+          )
+        );
+        break;
+    }
+  };
+
+  // Enviar mensaje
+  const handleSendMessage = async (content) => {
+    if (!user?.id) return;
+
+    // Optimistic update: agregar mensaje inmediatamente
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      sala_id: roomId,
+      usuario_id: user.id,
+      contenido: content,
+      created_at: new Date().toISOString(),
+      censurado: false,
+      pending: true,
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+
+    // Enviar al servidor
+    const { data, error } = await messagesService.sendMessage(
+      roomId,
+      user.id,
+      content
+    );
+
+    if (error) {
+      // Marcar como error si falló
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === optimisticMessage.id
+            ? { ...msg, error: true, pending: false }
+            : msg
+        )
+      );
+      throw error;
+    } else {
+      // Reemplazar mensaje temporal con el real
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === optimisticMessage.id ? { ...data, pending: false } : msg
+        )
+      );
+    }
+  };
+
+  // Simular indicador de "escribiendo..." (placeholder para HU-13)
+  const simulateTyping = () => {
+    // Esto se conectará con el estado del Pomodoro en HU-13
+    setTypingUsers(['Usuario']);
+    setTimeout(() => setTypingUsers([]), 3000);
+  };
+
+  useEffect(() => {
+    loadMessages();
+    setupRealtimeSubscription();
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, [loadMessages, setupRealtimeSubscription]);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.placeholderText}>
-        El chat en tiempo real estará disponible en la próxima actualización (HU-07).
-      </Text>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={90}
+    >
+      <View style={styles.container}>
+        {/* Indicador de escribiendo */}
+        <TypingIndicator users={typingUsers} />
+
+        {/* Lista de mensajes */}
+        <MessageList
+          messages={messages}
+          currentUserId={user?.id}
+          loading={loading}
+        />
+
+        {/* Input de mensaje */}
+        <MessageInput onSend={handleSendMessage} />
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.rooms.paddingX,
-  },
-
-  placeholderText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textRoomsMuted,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    backgroundColor: 'transparent',
   },
 });
 
