@@ -155,9 +155,19 @@ export const roomsService = {
     const existingParticipation = existingParticipations && existingParticipations.length > 0 ? existingParticipations[0] : null;
 
     if (existingParticipation) {
-      // Si ya está activo, error
+      // Si ya está activo, permitir "tomar control" de la sesión (útil después de recarga)
       if (existingParticipation.estado_conexion === 'activo') {
-        return { data: null, error: { message: 'Ya estás en esta sala' } };
+        // Actualizar timestamp para indicar actividad reciente
+        const { error: updateError } = await supabase
+          .from('participacion')
+          .update({ fecha_ingreso: new Date().toISOString() })
+          .eq('id', existingParticipation.id);
+
+        if (updateError) {
+          return { data: null, error: updateError };
+        }
+
+        return { data: room, error: null };
       }
 
       // Si está inactivo, reactivar

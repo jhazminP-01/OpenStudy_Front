@@ -31,11 +31,16 @@ const RoomScreen = ({ route, navigation }) => {
     setupRealtimeSubscription();
 
     return () => {
+      // Salir de la sala automáticamente al desmontar (navegación normal)
+      if (user?.id) {
+        roomsService.leaveRoom(roomId, user.id);
+      }
+
       if (subscription) {
         supabase.removeChannel(subscription);
       }
     };
-  }, [roomId]);
+  }, [roomId, user?.id]);
 
   const setupRealtimeSubscription = () => {
     subscription = supabase

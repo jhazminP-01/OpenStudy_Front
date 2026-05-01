@@ -96,7 +96,6 @@ export default function CreateRoomScreen({ navigation }) {
         materiaNombre: materiaSeleccionada?.nombre,
       });
     } catch (err) {
-      console.log('Error inesperado al crear sala:', err);
       setGeneralError('Ocurrió un error inesperado');
     } finally {
       setLoading(false);

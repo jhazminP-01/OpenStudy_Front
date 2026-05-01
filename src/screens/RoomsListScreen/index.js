@@ -30,6 +30,28 @@ export default function RoomsListScreen({ navigation, route }) {
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const { user } = useAuth();
 
+  // Al llegar a la lista de salas, limpiar cualquier sesión activa stale
+  // (por si se recargó/cerró la app estando en una sala)
+  useEffect(() => {
+    const cleanupStaleSessions = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Marcar todas las participaciones activas del usuario como inactivas en una sola query
+        await supabase
+          .from('participacion')
+          .update({ estado_conexion: 'inactivo' })
+          .eq('usuario_id', user.id)
+          .eq('estado_conexion', 'activo')
+          .eq('esta_expulsado', false);
+      } catch (error) {
+        // Silencioso - no afecta UX si falla
+      }
+    };
+
+    cleanupStaleSessions();
+  }, [user?.id]);
+
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const contentMaxWidth = isMobile ? '100%' : 460;

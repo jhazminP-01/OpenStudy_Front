@@ -52,15 +52,12 @@ const ParticipantsScreen = ({ route }) => {
         table: 'participacion',
         filter: `sala_id=eq.${roomId}`
       }, (payload) => {
-        console.log('Realtime update:', payload);
         loadParticipants();
       });
       
       // Suscribir después de configurar listeners
       channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to participants updates');
-        } else if (status === 'CHANNEL_ERROR') {
+        if (status === 'CHANNEL_ERROR') {
           console.error('Channel subscription error');
         }
       });
