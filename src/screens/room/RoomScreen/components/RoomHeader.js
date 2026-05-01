@@ -1,19 +1,14 @@
 import React from 'react';
-import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../../styles';
 import styles from '../RoomScreen.styles';
 
-const RoomHeader = ({ onBack, onLeave, leaving }) => {
+const RoomHeader = ({ roomName, onLeave, leaving }) => {
   return (
     <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={onBack}
-      >
-        <Ionicons name="chevron-back" size={26} color={COLORS.textWhite} />
-      </TouchableOpacity>
-
+      <Text style={styles.roomTitle}>{roomName}</Text>
+      
       <TouchableOpacity
         style={styles.headerButton}
         onPress={onLeave}

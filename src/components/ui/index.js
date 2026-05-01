@@ -12,3 +12,10 @@ export {
   DateSeparator,
   TypingIndicator,
 } from './Chat';
+
+// Timer components (HU-08)
+export {
+  TimerDisplay,
+  TimerControls,
+  TimerTab,
+} from './Timer';

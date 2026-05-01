@@ -40,6 +40,14 @@ export default StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
 
+  roomTitle: {
+    fontSize: TYPOGRAPHY.h3.fontSize,
+    fontWeight: TYPOGRAPHY.h3.fontWeight,
+    color: COLORS.textWhite,
+    flex: 1,
+    textAlign: 'center',
+  },
+
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',

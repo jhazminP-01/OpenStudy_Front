@@ -170,6 +170,7 @@ const RoomScreen = ({ route, navigation }) => {
           <RoomInfoTab
             roomData={roomData}
             participantsCount={participantsCount}
+            roomId={roomId}
           />
         );
       case 'chat':
@@ -188,7 +189,7 @@ const RoomScreen = ({ route, navigation }) => {
     >
       {/* Header */}
       <RoomHeader
-        onBack={() => navigation.goBack()}
+        roomName={roomData?.nombre || 'Sala'}
         onLeave={handleLeaveRoom}
         leaving={leaving}
       />
