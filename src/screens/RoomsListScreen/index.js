@@ -369,6 +369,7 @@ export default function RoomsListScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.createRoomButtonWrapper}
         onPress={() => navigation.navigate('CreateRoom')}
+        activeOpacity={0.8}
       >
         <LinearGradient
           colors={COLORS.gradientButton}
@@ -376,7 +377,7 @@ export default function RoomsListScreen({ navigation, route }) {
           end={{ x: 1, y: 0 }}
           style={styles.createRoomButton}
         >
-          <Text style={styles.createRoomButtonText}>+ Crear sala</Text>
+          <Ionicons name="add" size={32} color={COLORS.textWhite} />
         </LinearGradient>
       </TouchableOpacity>
 

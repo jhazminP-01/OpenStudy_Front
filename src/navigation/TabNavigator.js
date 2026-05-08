@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
@@ -65,18 +66,26 @@ export const TabNavigator = () => {
           return <Ionicons name={iconName} size={22} color={color} />;
         },
 
-        tabBarActiveTintColor: COLORS.textRoomsSecondaryButton,
-        tabBarInactiveTintColor: COLORS.textRoomsTertiary,
+        tabBarActiveTintColor: COLORS.textWhite,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.6)',
         headerShown: false,
 
         tabBarStyle: styles.tabBar,
 
         tabBarLabelStyle: styles.tabBarLabel,
 
-        tabBarItemStyle: styles.tabBarItem,
+        tabBarItemStyle: ({ focused }) => [
+          styles.tabBarItem,
+          focused && styles.tabBarItemActive,
+        ],
 
         tabBarBackground: () => (
-          <View style={styles.tabBarBackground} />
+          <LinearGradient
+            colors={COLORS.gradientButton}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.tabBarBackground}
+          />
         ),
       })}
     >
@@ -110,13 +119,12 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     bottom: SPACING.md,
     height: 70,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderRoomsMedium,
-    backgroundColor: COLORS.backgroundDark,
     borderRadius: SPACING.borderRadius['2xl'],
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.sm,
     elevation: 0,
+    borderTopWidth: 0,
+    backgroundColor: 'transparent',
   },
   tabBarLabel: {
     fontSize: TYPOGRAPHY.caption.fontSize,
@@ -124,13 +132,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tabBarItem: {
-    borderRadius: 18,
+    borderRadius: 16,
     marginHorizontal: 6,
+    paddingVertical: 4,
+  },
+  tabBarItemActive: {
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
   },
   tabBarBackground: {
     flex: 1,
     borderRadius: SPACING.borderRadius['2xl'],
-    backgroundColor: COLORS.backgroundDark,
     borderWidth: 1,
     borderColor: COLORS.borderRoomsLight,
     boxShadow: '0px 4px 14px rgba(0, 0, 0, 0.12)',

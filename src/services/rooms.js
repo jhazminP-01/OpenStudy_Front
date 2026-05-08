@@ -249,11 +249,12 @@ export const roomsService = {
 
   // Obtener participantes de una sala
   getParticipants: async (roomId) => {
-    // 1. Obtener participaciones de la sala
+    // 1. Obtener participaciones activas de la sala (solo conectados)
     const { data: participaciones, error: participacionesError } = await supabase
       .from('participacion')
       .select('id, usuario_id, rol, estado_conexion, esta_expulsado, fecha_ingreso')
       .eq('sala_id', roomId)
+      .eq('estado_conexion', 'activo')
       .eq('esta_expulsado', false)
       .order('fecha_ingreso', { ascending: true });
 

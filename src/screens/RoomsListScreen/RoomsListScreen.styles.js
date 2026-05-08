@@ -310,28 +310,22 @@ export default StyleSheet.create({
 
   createRoomButtonWrapper: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 84,
+    right: 20,
+    bottom: 100,
     zIndex: 100,
   },
 
   createRoomButton: {
-    borderRadius: 20,
-    paddingVertical: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: COLORS.shadowRooms,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 10,
-  },
-
-  createRoomButtonText: {
-    color: COLORS.textWhite,
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
   },
 
   errorText: {

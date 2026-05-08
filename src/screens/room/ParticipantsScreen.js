@@ -77,18 +77,17 @@ const ParticipantsScreen = ({ route }) => {
 
   const renderParticipant = ({ item }) => {
     const isModerator = item.rol === 'moderador';
-    const isOnline = item.estado_conexion === 'activo';
     const isCurrentUser = item.usuario_id === user?.id;
 
     return (
       <View style={styles.participantCard}>
         <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, isOnline && styles.avatarOnline]}>
+          <View style={[styles.avatar, styles.avatarOnline]}>
             <Text style={styles.avatarText}>
               {item.nombre_completo?.charAt(0).toUpperCase() || '?'}
             </Text>
           </View>
-          {isOnline && <View style={styles.onlineIndicator} />}
+          <View style={styles.onlineIndicator} />
         </View>
 
         <View style={styles.participantInfo}>
@@ -107,12 +106,6 @@ const ParticipantsScreen = ({ route }) => {
                 <Text style={styles.roleBadgeText}>Moderador</Text>
               </View>
             )}
-            <View style={[styles.statusBadge, isOnline ? styles.statusOnline : styles.statusOffline]}>
-              <View style={[styles.statusDot, isOnline && styles.statusDotOnline]} />
-              <Text style={styles.statusText}>
-                {isOnline ? 'En línea' : 'Desconectado'}
-              </Text>
-            </View>
           </View>
         </View>
       </View>
@@ -185,10 +178,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-
-  avatarOnline: {
     borderColor: COLORS.success,
   },
 
