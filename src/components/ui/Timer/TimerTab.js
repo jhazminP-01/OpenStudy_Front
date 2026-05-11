@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTimer } from '../../../hooks/useTimer';
 import TimerDisplay from './TimerDisplay';
 import TimerControls from './TimerControls';
+import TimerVideo from './TimerVideo';
 import { COLORS } from '../../../styles';
 
 const TimerTab = ({ roomId }) => {
@@ -45,6 +46,9 @@ const TimerTab = ({ roomId }) => {
           size={220}
         />
       </View>
+
+      {/* Video animado debajo del timer */}
+      <TimerVideo size={140} />
 
       {/* Controles del temporizador */}
       <TimerControls
