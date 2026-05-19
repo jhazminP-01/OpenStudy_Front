@@ -26,7 +26,7 @@ export const timerService = {
         .eq('usuario_id', userId)
         .eq('estado_conexion', 'activo')
         .eq('esta_expulsado', false)
-        .single();
+        .maybeSingle();
 
       if (participationError || !participation) {
         return { data: null, error: { message: 'No estás en esta sala' } };
@@ -36,11 +36,7 @@ export const timerService = {
         return { data: null, error: { message: 'Solo el moderador puede iniciar el temporizador' } };
       }
 
-      // 2. Configuración por defecto
-      const workMinutes = config.workMinutes || TIMER_DEFAULTS.WORK_MINUTES;
-      const breakMinutes = config.breakMinutes || TIMER_DEFAULTS.BREAK_MINUTES;
-
-      // 3. Verificar si ya existe un estado de timer
+      // 2. Verificar si ya existe un estado de timer
       const { data: existingTimer, error: timerError } = await supabase
         .from('pomodoro_estado')
         .select('*')
@@ -48,16 +44,43 @@ export const timerService = {
         .single();
 
       if (timerError && timerError.code !== 'PGRST116') {
-        // Error real (no es "not found")
         throw timerError;
       }
+
+      // 3. Leer configuración de la sala
+      const { data: sala } = await supabase
+        .from('sala')
+        .select('config_duracion_estudio, config_duracion_descanso, config_duracion_descanso_largo, config_ciclos_antes_largo')
+        .eq('id', roomId)
+        .single();
+
+      // 4. Resolver duraciones (config > _siguiente > sala.config_* > defaults)
+      // Si el timer está pausado/detenido, usar _siguiente para aplicar nueva config
+      const useNextValues = !existingTimer || existingTimer.estado === 'pausado' || existingTimer.estado === 'finalizado';
+
+      const workMinutes = config.workMinutes
+        ?? (useNextValues
+          ? (existingTimer?.duracion_estudio_siguiente ?? sala?.config_duracion_estudio ?? TIMER_DEFAULTS.WORK_MINUTES)
+          : (existingTimer?.duracion_estudio ?? sala?.config_duracion_estudio ?? TIMER_DEFAULTS.WORK_MINUTES));
+      const breakMinutes = config.breakMinutes
+        ?? (useNextValues
+          ? (existingTimer?.duracion_descanso_siguiente ?? sala?.config_duracion_descanso ?? TIMER_DEFAULTS.BREAK_MINUTES)
+          : (existingTimer?.duracion_descanso ?? sala?.config_duracion_descanso ?? TIMER_DEFAULTS.BREAK_MINUTES));
+      const longBreakMinutes = config.longBreakMinutes
+        ?? (useNextValues
+          ? (existingTimer?.duracion_descanso_largo_siguiente ?? sala?.config_duracion_descanso_largo ?? TIMER_DEFAULTS.LONG_BREAK_MINUTES)
+          : (existingTimer?.duracion_descanso_largo ?? sala?.config_duracion_descanso_largo ?? TIMER_DEFAULTS.LONG_BREAK_MINUTES));
+      const cyclesBeforeLong = config.cyclesBeforeLong
+        ?? (useNextValues
+          ? (existingTimer?.ciclos_antes_descanso_largo_siguiente ?? sala?.config_ciclos_antes_largo ?? TIMER_DEFAULTS.CYCLES_BEFORE_LONG_BREAK)
+          : (existingTimer?.ciclos_antes_descanso_largo ?? sala?.config_ciclos_antes_largo ?? TIMER_DEFAULTS.CYCLES_BEFORE_LONG_BREAK));
 
       const now = new Date().toISOString();
       const timeInSeconds = workMinutes * 60;
 
       let result;
       if (existingTimer) {
-        // 4a. Actualizar timer existente
+        // 5a. Reiniciar timer existente aplicando valores _siguiente
         const { data, error } = await supabase
           .from('pomodoro_estado')
           .update({
@@ -65,6 +88,9 @@ export const timerService = {
             estado: 'activo',
             duracion_estudio: workMinutes,
             duracion_descanso: breakMinutes,
+            duracion_descanso_largo: longBreakMinutes,
+            ciclos_antes_descanso_largo: cyclesBeforeLong,
+            ciclos_completados: 0,
             tiempo_restante: timeInSeconds,
             iniciado_en: now,
             updated_at: now,
@@ -75,7 +101,7 @@ export const timerService = {
 
         result = { data, error };
       } else {
-        // 4b. Crear nuevo timer
+        // 5b. Crear nuevo timer copiando config de sala
         const { data, error } = await supabase
           .from('pomodoro_estado')
           .insert({
@@ -84,8 +110,13 @@ export const timerService = {
             estado: 'activo',
             duracion_estudio: workMinutes,
             duracion_descanso: breakMinutes,
+            duracion_descanso_largo: longBreakMinutes,
+            ciclos_antes_descanso_largo: cyclesBeforeLong,
             duracion_estudio_siguiente: workMinutes,
             duracion_descanso_siguiente: breakMinutes,
+            duracion_descanso_largo_siguiente: longBreakMinutes,
+            ciclos_antes_descanso_largo_siguiente: cyclesBeforeLong,
+            ciclos_completados: 0,
             tiempo_restante: timeInSeconds,
             iniciado_en: now,
           })
@@ -129,7 +160,7 @@ export const timerService = {
         .eq('usuario_id', userId)
         .eq('estado_conexion', 'activo')
         .eq('esta_expulsado', false)
-        .single();
+        .maybeSingle();
 
       if (participationError || !participation || participation.rol !== 'moderador') {
         return { data: null, error: { message: 'Solo el moderador puede pausar el temporizador' } };
@@ -197,7 +228,7 @@ export const timerService = {
         .eq('usuario_id', userId)
         .eq('estado_conexion', 'activo')
         .eq('esta_expulsado', false)
-        .single();
+        .maybeSingle();
 
       if (participationError || !participation || participation.rol !== 'moderador') {
         return { data: null, error: { message: 'Solo el moderador puede reanudar el temporizador' } };
@@ -251,7 +282,7 @@ export const timerService = {
         .eq('usuario_id', userId)
         .eq('estado_conexion', 'activo')
         .eq('esta_expulsado', false)
-        .single();
+        .maybeSingle();
 
       if (participationError || !participation || participation.rol !== 'moderador') {
         return { data: null, error: { message: 'Solo el moderador puede reiniciar el temporizador' } };
@@ -269,18 +300,37 @@ export const timerService = {
       }
 
       const now = new Date().toISOString();
-      const isStudyPhase = currentTimer.fase === 'estudio';
-      const duration = isStudyPhase ? currentTimer.duracion_estudio : currentTimer.duracion_descanso;
+      const duration = currentTimer.fase === 'estudio'
+        ? currentTimer.duracion_estudio_siguiente ?? currentTimer.duracion_estudio
+        : currentTimer.fase === 'descanso_largo'
+          ? currentTimer.duracion_descanso_largo_siguiente ?? currentTimer.duracion_descanso_largo
+          : currentTimer.duracion_descanso_siguiente ?? currentTimer.duracion_descanso;
       const timeInSeconds = duration * 60;
+
+      const updatePayload = {
+        estado: 'activo',
+        tiempo_restante: timeInSeconds,
+        iniciado_en: now,
+        updated_at: now,
+      };
+
+      // Aplicar valores _siguiente a los campos principales
+      if (currentTimer.duracion_estudio_siguiente) {
+        updatePayload.duracion_estudio = currentTimer.duracion_estudio_siguiente;
+      }
+      if (currentTimer.duracion_descanso_siguiente) {
+        updatePayload.duracion_descanso = currentTimer.duracion_descanso_siguiente;
+      }
+      if (currentTimer.duracion_descanso_largo_siguiente) {
+        updatePayload.duracion_descanso_largo = currentTimer.duracion_descanso_largo_siguiente;
+      }
+      if (currentTimer.ciclos_antes_descanso_largo_siguiente) {
+        updatePayload.ciclos_antes_descanso_largo = currentTimer.ciclos_antes_descanso_largo_siguiente;
+      }
 
       const { data, error } = await supabase
         .from('pomodoro_estado')
-        .update({
-          estado: 'activo',
-          tiempo_restante: timeInSeconds,
-          iniciado_en: now,
-          updated_at: now,
-        })
+        .update(updatePayload)
         .eq('sala_id', roomId)
         .select('*')
         .single();
@@ -299,6 +349,215 @@ export const timerService = {
 
     } catch (error) {
       console.error('Error resetting timer:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Actualizar configuración del temporizador (aplica al siguiente ciclo)
+   * @param {number} roomId - ID de la sala (bigint)
+   * @param {string} userId - ID del usuario (uuid) - debe ser moderador
+   * @param {number} estudio - Duración de estudio en minutos (5-60)
+   * @param {number} descanso - Duración de descanso en minutos (1-60)
+   * @returns {Promise<{data: object, error: Error}>}
+   */
+  updateTimerConfig: async (roomId, userId, { estudio, descanso, descansoLargo, ciclosAntesLargo }) => {
+    try {
+      // Verificar que el usuario es moderador
+      const { data: participation, error: participationError } = await supabase
+        .from('participacion')
+        .select('rol')
+        .eq('sala_id', roomId)
+        .eq('usuario_id', userId)
+        .eq('estado_conexion', 'activo')
+        .eq('esta_expulsado', false)
+        .maybeSingle();
+
+      if (participationError || !participation || participation.rol !== 'moderador') {
+        return { data: null, error: { message: 'Solo el moderador puede configurar el temporizador' } };
+      }
+
+      // Validar rangos
+      const estudioVal = parseInt(estudio);
+      const descansoVal = parseInt(descanso);
+      const descansoLargoVal = parseInt(descansoLargo);
+      const ciclosVal = parseInt(ciclosAntesLargo);
+
+      if (isNaN(estudioVal) || estudioVal < 5 || estudioVal > 60)
+        return { data: null, error: { message: 'Estudio: entre 5 y 60 minutos' } };
+      if (isNaN(descansoVal) || descansoVal < 1 || descansoVal > 60)
+        return { data: null, error: { message: 'Descanso: entre 1 y 60 minutos' } };
+      if (isNaN(descansoLargoVal) || descansoLargoVal < 5 || descansoLargoVal > 60)
+        return { data: null, error: { message: 'Descanso largo: entre 5 y 60 minutos' } };
+      if (isNaN(ciclosVal) || ciclosVal < 1 || ciclosVal > 8)
+        return { data: null, error: { message: 'Ciclos antes del descanso largo: entre 1 y 8' } };
+
+      const now = new Date().toISOString();
+
+      // Actualizar sala.config_* (fuente de verdad para nuevas sesiones)
+      const { error: salaError } = await supabase
+        .from('sala')
+        .update({
+          config_duracion_estudio: estudioVal,
+          config_duracion_descanso: descansoVal,
+          config_duracion_descanso_largo: descansoLargoVal,
+          config_ciclos_antes_largo: ciclosVal,
+        })
+        .eq('id', roomId);
+
+      if (salaError) {
+        console.error('Error updating sala config:', salaError);
+        return { data: null, error: salaError };
+      }
+
+      // Actualizar pomodoro_estado.*_siguiente (para la sesión actual)
+      const { data: existingTimer } = await supabase
+        .from('pomodoro_estado')
+        .select('id')
+        .eq('sala_id', roomId)
+        .single();
+
+      let result;
+      if (existingTimer) {
+        result = await supabase
+          .from('pomodoro_estado')
+          .update({
+            duracion_estudio_siguiente: estudioVal,
+            duracion_descanso_siguiente: descansoVal,
+            duracion_descanso_largo_siguiente: descansoLargoVal,
+            ciclos_antes_descanso_largo_siguiente: ciclosVal,
+            updated_at: now,
+          })
+          .eq('sala_id', roomId)
+          .select('*')
+          .single();
+      } else {
+        result = await supabase
+          .from('pomodoro_estado')
+          .insert({
+            sala_id: roomId,
+            duracion_estudio_siguiente: estudioVal,
+            duracion_descanso_siguiente: descansoVal,
+            duracion_descanso_largo_siguiente: descansoLargoVal,
+            ciclos_antes_descanso_largo_siguiente: ciclosVal,
+          })
+          .select('*')
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      // Emitir evento realtime
+      const channel = supabase.channel(`pomodoro:${roomId}`);
+      channel.send({
+        type: 'broadcast',
+        event: 'timer_config_updated',
+        payload: result.data,
+      });
+
+      return { data: result.data, error: null };
+
+    } catch (error) {
+      console.error('Error updating timer config:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Completar un ciclo y transicionar a la siguiente fase
+   * Solo debe llamarlo el moderador cuando el timer llega a 0
+   * @param {number} roomId - ID de la sala
+   * @param {string} userId - ID del usuario moderador
+   */
+  completeCycle: async (roomId, userId) => {
+    try {
+      const now = new Date().toISOString();
+
+      const { data: currentTimer, error: timerError } = await supabase
+        .from('pomodoro_estado')
+        .select('*')
+        .eq('sala_id', roomId)
+        .single();
+
+      if (timerError || !currentTimer) {
+        return { data: null, error: { message: 'No hay temporizador activo' } };
+      }
+
+      const wasStudy = currentTimer.fase === 'estudio';
+      const wasDescanso = currentTimer.fase === 'descanso';
+      const wasLong = currentTimer.fase === 'descanso_largo';
+
+      // Insertar sesión completada (solo en fase estudio)
+      if (wasStudy && userId) {
+        const expectedDuration = currentTimer.duracion_estudio;
+        await supabase.from('sesion_pomodoro').insert({
+          sala_id: roomId,
+          usuario_id: userId,
+          duracion: expectedDuration,
+          completada: true,
+        });
+      }
+
+      // Calcular siguiente fase
+      let nextFase;
+      let nextTiempo;
+      let nuevosCiclos = currentTimer.ciclos_completados;
+      const applyNext = wasDescanso || wasLong;
+
+      if (wasStudy) {
+        nuevosCiclos += 1;
+        if (nuevosCiclos >= currentTimer.ciclos_antes_descanso_largo) {
+          nextFase = 'descanso_largo';
+          nextTiempo = (currentTimer.duracion_descanso_largo_siguiente ?? currentTimer.duracion_descanso_largo) * 60;
+        } else {
+          nextFase = 'descanso';
+          nextTiempo = currentTimer.duracion_descanso_siguiente * 60;
+        }
+      } else {
+        nextFase = 'estudio';
+        nextTiempo = currentTimer.duracion_estudio_siguiente * 60;
+        if (wasLong) nuevosCiclos = 0;
+      }
+
+      // Construir payload de actualización
+      const updatePayload = {
+        fase: nextFase,
+        estado: 'activo',
+        ciclos_completados: nuevosCiclos,
+        tiempo_restante: nextTiempo,
+        iniciado_en: now,
+        updated_at: now,
+      };
+
+      // Aplicar valores _siguiente cuando se vuelve a estudio
+      if (applyNext) {
+        updatePayload.duracion_estudio = currentTimer.duracion_estudio_siguiente;
+        updatePayload.duracion_descanso = currentTimer.duracion_descanso_siguiente;
+        updatePayload.duracion_descanso_largo = currentTimer.duracion_descanso_largo_siguiente ?? currentTimer.duracion_descanso_largo;
+        updatePayload.ciclos_antes_descanso_largo = currentTimer.ciclos_antes_descanso_largo_siguiente ?? currentTimer.ciclos_antes_descanso_largo;
+      }
+
+      const { data, error } = await supabase
+        .from('pomodoro_estado')
+        .update(updatePayload)
+        .eq('sala_id', roomId)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      // Emitir evento realtime
+      const channel = supabase.channel(`pomodoro:${roomId}`);
+      channel.send({
+        type: 'broadcast',
+        event: 'timer_cycle_completed',
+        payload: { timerState: data, completedPhase: currentTimer.fase },
+      });
+
+      return { data, error: null };
+
+    } catch (error) {
+      console.error('Error completing cycle:', error);
       return { data: null, error };
     }
   },
@@ -381,6 +640,12 @@ export const timerService = {
       })
       .on('broadcast', { event: 'timer_reset' }, (payload) => {
         callback({ type: 'timer_reset', payload: payload.payload });
+      })
+      .on('broadcast', { event: 'timer_config_updated' }, (payload) => {
+        callback({ type: 'timer_config_updated', payload: payload.payload });
+      })
+      .on('broadcast', { event: 'timer_cycle_completed' }, (payload) => {
+        callback({ type: 'timer_cycle_completed', payload: payload.payload });
       })
       .subscribe();
 

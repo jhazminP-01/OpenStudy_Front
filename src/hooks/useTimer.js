@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { timerService } from '../services/timer';
 import { useAuth } from './useAuth';
-import { TIMER_STATUSES } from '../utils/constants';
+import { TIMER_STATUSES, TIMER_DEFAULTS } from '../utils/constants';
 
 /**
  * Hook personalizado para manejar el estado del temporizador Pomodoro
@@ -16,6 +16,13 @@ export const useTimer = (roomId) => {
   const [isModerator, setIsModerator] = useState(false);
   const subscriptionRef = useRef(null);
   const intervalRef = useRef(null);
+  const isModeratorRef = useRef(false);
+  const userIdRef = useRef(user?.id);
+  const cycleCompletingRef = useRef(false);
+
+  // Mantener refs actualizadas para evitar stale closures en el countdown
+  useEffect(() => { isModeratorRef.current = isModerator; }, [isModerator]);
+  useEffect(() => { userIdRef.current = user?.id; }, [user?.id]);
 
   // Cargar estado inicial del timer
   const loadTimerState = useCallback(async () => {
@@ -40,7 +47,7 @@ export const useTimer = (roomId) => {
           .eq('usuario_id', user.id)
           .eq('estado_conexion', 'activo')
           .eq('esta_expulsado', false)
-          .single();
+          .maybeSingle();
 
         // Si hay error 406 (tabla no existe) u otros errores, asumir que no es moderador
         if (participationError) {
@@ -54,8 +61,13 @@ export const useTimer = (roomId) => {
       setTimerState(timerData);
       
       if (timerData) {
-        const calculatedTimeLeft = timerService.calculateTimeLeft(timerData);
-        setTimeLeft(calculatedTimeLeft);
+        // Si está pausado, mostrar el tiempo de la nueva config (_siguiente) como preview
+        if (timerData.estado === 'pausado' && timerData.duracion_estudio_siguiente) {
+          setTimeLeft(timerData.duracion_estudio_siguiente * 60);
+        } else {
+          const calculatedTimeLeft = timerService.calculateTimeLeft(timerData);
+          setTimeLeft(calculatedTimeLeft);
+        }
       } else {
         setTimeLeft(0);
       }
@@ -88,8 +100,13 @@ export const useTimer = (roomId) => {
         // Cambios directos en la tabla
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
           setTimerState(payload.new);
-          const calculatedTimeLeft = timerService.calculateTimeLeft(payload.new);
-          setTimeLeft(calculatedTimeLeft);
+          // Solo actualizar timeLeft si el timer está activo
+          // Si está pausado, los eventos broadcast ya manejan timeLeft correctamente
+          // y evitamos sobreescribir el preview visual de la nueva configuración
+          if (payload.new.estado === 'activo') {
+            const calculatedTimeLeft = timerService.calculateTimeLeft(payload.new);
+            setTimeLeft(calculatedTimeLeft);
+          }
         }
         break;
 
@@ -102,6 +119,22 @@ export const useTimer = (roomId) => {
         const calculatedTimeLeft = timerService.calculateTimeLeft(payload);
         setTimeLeft(calculatedTimeLeft);
         break;
+
+      case 'timer_config_updated':
+        setTimerState(prev => prev ? { ...prev, ...payload } : payload);
+        // Actualizar preview del tiempo para todos los usuarios
+        if (payload.duracion_estudio_siguiente) {
+          setTimeLeft(payload.duracion_estudio_siguiente * 60);
+        }
+        break;
+
+      case 'timer_cycle_completed': {
+        const cycleState = payload.timerState;
+        setTimerState(cycleState);
+        const cycleTimeLeft = timerService.calculateTimeLeft(cycleState);
+        setTimeLeft(cycleTimeLeft);
+        break;
+      }
     }
   }, []);
 
@@ -112,19 +145,23 @@ export const useTimer = (roomId) => {
       clearInterval(intervalRef.current);
     }
 
-    // Solo correr countdown si el timer está activo
     if (timerState?.estado === 'activo' && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prevTime) => {
           const newTime = prevTime - 1;
-          
-          // Si el tiempo llega a 0, verificar con el servidor
+
           if (newTime <= 0) {
-            // Forzar sincronización con servidor
-            loadTimerState();
+            // Solo el moderador dispara la transición de ciclo
+            if (isModeratorRef.current && !cycleCompletingRef.current) {
+              cycleCompletingRef.current = true;
+              setTimeout(() => {
+                timerService.completeCycle(roomId, userIdRef.current)
+                  .finally(() => { cycleCompletingRef.current = false; });
+              }, 0);
+            }
             return 0;
           }
-          
+
           return newTime;
         });
       }, 1000);
@@ -135,7 +172,7 @@ export const useTimer = (roomId) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [timerState?.estado, timeLeft, loadTimerState]);
+  }, [timerState?.estado, timeLeft, roomId]);
 
   // Sincronización periódica con servidor (cada 30 segundos)
   useEffect(() => {
@@ -220,6 +257,34 @@ export const useTimer = (roomId) => {
     return data;
   }, [roomId, user?.id]);
 
+  const updateConfig = useCallback(async ({ estudio, descanso, descansoLargo, ciclosAntesLargo }) => {
+    if (!user?.id) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const { data, error } = await timerService.updateTimerConfig(
+      roomId, user.id, { estudio, descanso, descansoLargo, ciclosAntesLargo }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    // Actualizar preview local del tiempo si el timer no está corriendo activamente
+    if (!isModeratorRef.current || timerState?.estado !== 'activo') {
+      setTimeLeft(parseInt(estudio) * 60);
+    }
+
+    return data;
+  }, [roomId, user?.id, timerState?.estado]);
+
+  const completeCycle = useCallback(async () => {
+    if (!user?.id) return;
+    const { data, error } = await timerService.completeCycle(roomId, user.id);
+    if (error) console.error('Error completing cycle:', error);
+    return data;
+  }, [roomId, user?.id]);
+
   // Estados derivados
   const phase = timerState?.fase || 'estudio';
   const status = timerState?.estado || 'stopped';
@@ -228,13 +293,18 @@ export const useTimer = (roomId) => {
   const isStopped = !timerState;
   const isStudyPhase = phase === 'estudio';
   const isBreakPhase = phase === 'descanso';
+  const isLongBreakPhase = phase === 'descanso_largo';
+  const ciclosCompletados = timerState?.ciclos_completados ?? 0;
+  const ciclosParaDescansoLargo = timerState?.ciclos_antes_descanso_largo ?? TIMER_DEFAULTS.CYCLES_BEFORE_LONG_BREAK;
 
   // Formato de tiempo
   const formattedTime = timerService.formatTime(timeLeft);
-  const progress = timerState ? 
-    ((timerState.fase === 'estudio' ? timerState.duracion_estudio : timerState.duracion_descanso) * 60 - timeLeft) / 
-    ((timerState.fase === 'estudio' ? timerState.duracion_estudio : timerState.duracion_descanso) * 60) * 100 
-    : 0;
+  const totalDuration = timerState?.fase === 'estudio'
+    ? timerState.duracion_estudio
+    : timerState?.fase === 'descanso_largo'
+      ? timerState.duracion_descanso_largo
+      : timerState?.duracion_descanso;
+  const progress = timerState ? (totalDuration * 60 - timeLeft) / (totalDuration * 60) * 100 : 0;
 
   return {
     // Estado
@@ -253,12 +323,17 @@ export const useTimer = (roomId) => {
     isStopped,
     isStudyPhase,
     isBreakPhase,
+    isLongBreakPhase,
+    ciclosCompletados,
+    ciclosParaDescansoLargo,
     
     // Funciones de control
     startTimer,
     pauseTimer,
     resumeTimer,
     resetTimer,
+    updateConfig,
+    completeCycle,
     
     // Utilidades
     formatTime: timerService.formatTime,

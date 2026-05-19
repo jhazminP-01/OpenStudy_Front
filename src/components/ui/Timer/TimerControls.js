@@ -30,89 +30,54 @@ const TimerControls = ({
   const isActive = status === 'activo';
   const isPaused = status === 'pausado';
 
-  if (!isModerator) {
-    return (
-      <View style={styles.nonModeratorContainer}>
-        <Ionicons 
-          name="lock-closed" 
-          size={20} 
-          color={COLORS.textRoomsTertiary} 
-        />
-        <Text style={styles.nonModeratorText}>
-          Solo el moderador puede controlar el temporizador
-        </Text>
-      </View>
-    );
-  }
+  if (!isModerator) return null;
 
   return (
     <View style={styles.container}>
-      {/* Contenedor de botones */}
-      <View style={styles.buttonsContainer}>
-        {/* Botón principal (Iniciar/Pausar/Reanudar) */}
+      {/* Botón principal (Iniciar/Pausar/Reanudar) */}
+      <TouchableOpacity
+        style={[
+          styles.primaryButton,
+          isStopped && styles.startButton,
+          isActive && styles.pauseButton,
+          isPaused && styles.resumeButton,
+        ]}
+        onPress={() => {
+          if (isStopped) {
+            handleAction('start', onStart);
+          } else if (isActive) {
+            handleAction('pause', onPause);
+          } else if (isPaused) {
+            handleAction('resume', onResume);
+          }
+        }}
+        disabled={loading || actionLoading !== ''}
+      >
+        {actionLoading === 'start' || actionLoading === 'pause' || actionLoading === 'resume' ? (
+          <ActivityIndicator color={COLORS.textWhite} size="small" />
+        ) : (
+          <Ionicons
+            name={isStopped ? 'play' : isActive ? 'pause' : 'play'}
+            size={24}
+            color={COLORS.textWhite}
+          />
+        )}
+      </TouchableOpacity>
+
+      {/* Botón reiniciar */}
+      {!isStopped && (
         <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            isStopped && styles.startButton,
-            isActive && styles.pauseButton,
-            isPaused && styles.resumeButton,
-          ]}
-          onPress={() => {
-            if (isStopped) {
-              handleAction('start', onStart);
-            } else if (isActive) {
-              handleAction('pause', onPause);
-            } else if (isPaused) {
-              handleAction('resume', onResume);
-            }
-          }}
+          style={styles.secondaryButton}
+          onPress={() => handleAction('reset', onReset)}
           disabled={loading || actionLoading !== ''}
         >
-          {actionLoading === 'start' || actionLoading === 'pause' || actionLoading === 'resume' ? (
-            <ActivityIndicator color={COLORS.textWhite} size="small" />
+          {actionLoading === 'reset' ? (
+            <ActivityIndicator color={COLORS.primary} size="small" />
           ) : (
-            <Ionicons
-              name={
-                isStopped ? 'play' : isActive ? 'pause' : 'play'
-              }
-              size={28}
-              color={COLORS.textWhite}
-            />
+            <Ionicons name="refresh" size={18} color={COLORS.primary} />
           )}
         </TouchableOpacity>
-
-        {/* Botón secundario (Reiniciar) */}
-        {!isStopped && (
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => handleAction('reset', onReset)}
-            disabled={loading || actionLoading !== ''}
-          >
-            {actionLoading === 'reset' ? (
-              <ActivityIndicator color={COLORS.primary} size="small" />
-            ) : (
-              <Ionicons
-                name="refresh"
-                size={22}
-                color={COLORS.primary}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Indicador de estado */}
-      <View style={styles.statusContainer}>
-        <View style={[
-          styles.statusDot,
-          { backgroundColor: isPaused ? COLORS.warning : isActive ? COLORS.success : COLORS.textRoomsTertiary }
-        ]} />
-        <Text style={styles.statusText}>
-          {isStopped ? 'Temporizador detenido' : 
-           isPaused ? 'Temporizador pausado' : 
-           'Temporizador activo'}
-        </Text>
-      </View>
+      )}
     </View>
   );
 };
@@ -120,24 +85,20 @@ const TimerControls = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
-    marginBottom: 12,
+    gap: 10,
   },
   primaryButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   startButton: {
     backgroundColor: COLORS.primary,
@@ -149,42 +110,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   secondaryButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.primary,
     backgroundColor: 'transparent',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    color: COLORS.textRoomsSecondary,
-    textAlign: 'center',
-  },
-  nonModeratorContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-  },
-  nonModeratorText: {
-    fontSize: 12,
-    color: COLORS.textRoomsTertiary,
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
   },
 });
 

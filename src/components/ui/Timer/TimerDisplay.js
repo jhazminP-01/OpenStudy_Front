@@ -13,11 +13,16 @@ const TimerDisplay = ({
   size = 200,
 }) => {
   const isStudyPhase = phase === 'estudio';
+  const isLongBreakPhase = phase === 'descanso_largo';
   const isActive = status === 'activo';
   const isPaused = status === 'pausado';
-  
+
   // Colores según fase
-  const phaseColor = isStudyPhase ? COLORS.primary : COLORS.secondary;
+  const phaseColor = isStudyPhase
+    ? COLORS.primary
+    : isLongBreakPhase
+      ? '#3B82F6'
+      : COLORS.secondary;
   const statusColor = isActive ? phaseColor : COLORS.textRoomsTertiary;
   
   // Calcular dimensión del círculo
@@ -84,7 +89,7 @@ const TimerDisplay = ({
           
           {/* Fase actual */}
           <Text style={styles.phaseText}>
-            {isStudyPhase ? 'Tiempo de Estudio' : 'Tiempo de Descanso'}
+            {isStudyPhase ? 'Tiempo de Estudio' : isLongBreakPhase ? 'Descanso Largo' : 'Tiempo de Descanso'}
           </Text>
           
           {/* Estado */}
