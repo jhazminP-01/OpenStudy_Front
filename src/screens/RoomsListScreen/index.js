@@ -386,6 +386,7 @@ export default function RoomsListScreen({ navigation, route }) {
         visible={modalVisible}
         roomId={selectedRoomId}
         onClose={handleCloseModal}
+        navigation={navigation}
       />
     </LinearGradient>
   );

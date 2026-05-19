@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTimer } from '../../../hooks/useTimer';
+import { useCycleNotification } from '../../../hooks/useCycleNotification';
 import TimerDisplay from './TimerDisplay';
 import TimerControls from './TimerControls';
 import TimerVideo from './TimerVideo';
 import TimerConfig from './TimerConfig';
+import CycleNotification from './CycleNotification';
 import { COLORS } from '../../../styles';
 
 const TimerTab = ({ roomId }) => {
   const [configVisible, setConfigVisible] = useState(false);
   const [configuredValues, setConfiguredValues] = useState(null);
+  const prevPhaseRef = useRef(null);
+
+  const {
+    notificationVisible,
+    completedPhase,
+    soundEnabled,
+    toggleSound,
+    showNotification,
+    dismissNotification,
+  } = useCycleNotification();
 
   const {
     timerState,
@@ -32,7 +44,23 @@ const TimerTab = ({ roomId }) => {
     resumeTimer,
     resetTimer,
     updateConfig,
+    completeCycle,
+    cycleHistory,
+    addToCycleHistory,
   } = useTimer(roomId);
+
+  // Detectar cambio de fase para mostrar notificación
+  const timerStatePhaseKey = timerState?.fase + ':' + timerState?.ciclos_completados;
+  useEffect(() => {
+    if (!timerState) return;
+    const currentKey = timerState.fase + ':' + timerState.ciclos_completados;
+    if (prevPhaseRef.current && prevPhaseRef.current !== currentKey) {
+      const prevPhase = prevPhaseRef.current.split(':')[0];
+      showNotification(prevPhase);
+      addToCycleHistory(prevPhase);
+    }
+    prevPhaseRef.current = currentKey;
+  }, [timerStatePhaseKey]);
 
   const handleModerationPress = () => {
     Alert.alert('Moderación', 'El panel de moderación estará disponible próximamente.');
@@ -74,6 +102,14 @@ const TimerTab = ({ roomId }) => {
   }
 
   return (
+    <View style={styles.wrapper}>
+      {/* Notificación de fin de ciclo */}
+      <CycleNotification
+        visible={notificationVisible}
+        completedPhase={completedPhase}
+        onDismiss={dismissNotification}
+      />
+
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Display del temporizador */}
       <View style={styles.displayContainer}>
@@ -98,6 +134,7 @@ const TimerTab = ({ roomId }) => {
             onPause={pauseTimer}
             onResume={handleResume}
             onReset={resetTimer}
+            onSkip={completeCycle}
             loading={loading}
           />
         </View>
@@ -107,6 +144,18 @@ const TimerTab = ({ roomId }) => {
 
         {/* Columna derecha: configuración + moderación */}
         <View style={styles.rightColumn}>
+          {/* Botón de sonido (todos los usuarios) */}
+          <TouchableOpacity
+            style={[styles.sideButton, !soundEnabled && styles.sideButtonDisabled]}
+            onPress={toggleSound}
+          >
+            <Ionicons
+              name={soundEnabled ? 'volume-high-outline' : 'volume-mute-outline'}
+              size={22}
+              color={soundEnabled ? COLORS.secondary : COLORS.textRoomsTertiary}
+            />
+          </TouchableOpacity>
+
           {isModerator && (
             <>
               <TouchableOpacity
@@ -139,50 +188,82 @@ const TimerTab = ({ roomId }) => {
         </Text>
       </View>
 
-      {/* Información adicional */}
-      <View style={styles.infoContainer}>
-        <View style={styles.infoRow}>
-          <View style={styles.infoItem}>
-            <View style={[
-              styles.phaseIndicator,
-              { backgroundColor: phase === 'estudio' ? COLORS.primary : COLORS.secondary }
-            ]} />
-            <Text style={styles.infoText}>
-              Fase: {phase === 'estudio' ? 'Estudio' : 'Descanso'}
-            </Text>
-          </View>
+      {/* Tarjetas de estado */}
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, { borderColor: phase === 'estudio' ? COLORS.primary : COLORS.secondary }]}>
+          <Ionicons
+            name={phase === 'estudio' ? 'book-outline' : 'cafe-outline'}
+            size={18}
+            color={phase === 'estudio' ? COLORS.primary : COLORS.secondary}
+          />
+          <Text style={[styles.statLabel, { color: phase === 'estudio' ? COLORS.primary : COLORS.secondary }]}>
+            {phase === 'estudio' ? 'Estudio' : phase === 'descanso_largo' ? 'Desc. Largo' : 'Descanso'}
+          </Text>
+          <Text style={styles.statSub}>Fase actual</Text>
         </View>
 
         {timerState && (
-          <>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoText}>
-                  Ciclo actual: {timerState.duracion_estudio}min estudio / {timerState.duracion_descanso}min descanso
-                </Text>
-              </View>
-            </View>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoText}>
-                  Pomodoros: {ciclosCompletados} / {ciclosParaDescansoLargo}
-                  {ciclosCompletados === ciclosParaDescansoLargo - 1 ? ' — ¡Próximo descanso largo!' : ''}
-                </Text>
-              </View>
-            </View>
-          </>
+          <View style={[styles.statCard, { borderColor: COLORS.statusActive }]}>
+            <Ionicons name="timer-outline" size={18} color={COLORS.statusActive} />
+            <Text style={[styles.statLabel, { color: COLORS.statusActive }]}>
+              {timerState.duracion_estudio}' / {timerState.duracion_descanso}'
+            </Text>
+            <Text style={styles.statSub}>Ciclo actual</Text>
+          </View>
         )}
 
-        {!isModerator && (
-          <View style={styles.participantInfo}>
-            <Text style={styles.participantText}>
-              Como participante, puedes ver el temporizador sincronizado pero no controlarlo.
+        {timerState && (
+          <View style={[styles.statCard, { borderColor: COLORS.warning }]}>
+            <Ionicons name="flame-outline" size={18} color={COLORS.warning} />
+            <Text style={[styles.statLabel, { color: COLORS.warning }]}>
+              {ciclosCompletados} / {ciclosParaDescansoLargo}
+            </Text>
+            <Text style={styles.statSub}>
+              {ciclosCompletados === ciclosParaDescansoLargo - 1 ? '¡Casi desc. largo!' : 'Pomodoros'}
             </Text>
           </View>
         )}
       </View>
 
-      {/* Modal de configuración */}
+      {!isModerator && (
+        <View style={styles.participantInfo}>
+          <Ionicons name="eye-outline" size={14} color={COLORS.textRoomsTertiary} />
+          <Text style={styles.participantText}>
+            Solo el moderador puede controlar el temporizador
+          </Text>
+        </View>
+      )}
+
+      {cycleHistory.length > 0 && (
+        <View style={styles.historyContainer}>
+          <View style={styles.historyHeader}>
+            <Ionicons name="time-outline" size={14} color={COLORS.textRoomsSecondary} />
+            <Text style={styles.historyTitle}>Historial de ciclos</Text>
+          </View>
+          {cycleHistory.map((item) => (
+            <View key={item.id} style={styles.historyItem}>
+              <View style={[styles.historyDot, {
+                backgroundColor: item.phase === 'estudio' ? COLORS.primary :
+                                 item.phase === 'descanso_largo' ? COLORS.accent : COLORS.secondary
+              }]} />
+              <Ionicons
+                name={item.phase === 'estudio' ? 'book-outline' : item.phase === 'descanso_largo' ? 'moon-outline' : 'cafe-outline'}
+                size={13}
+                color={item.phase === 'estudio' ? COLORS.primary : item.phase === 'descanso_largo' ? COLORS.accent : COLORS.secondary}
+              />
+              <Text style={styles.historyText}>
+                {item.phase === 'estudio' ? 'Estudio completado' :
+                 item.phase === 'descanso_largo' ? 'Descanso largo completado' :
+                 'Descanso completado'}
+              </Text>
+              <Text style={styles.historyTime}>{item.time}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+    </ScrollView>
+
       <TimerConfig
         visible={configVisible}
         onClose={() => setConfigVisible(false)}
@@ -192,11 +273,15 @@ const TimerTab = ({ roomId }) => {
         currentDescansoLargo={timerState?.duracion_descanso_largo_siguiente ?? 30}
         currentCiclosAntesLargo={timerState?.ciclos_antes_descanso_largo_siguiente ?? 4}
       />
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    position: 'relative',
+  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -255,6 +340,41 @@ const styles = StyleSheet.create({
   sideButtonMod: {
     borderColor: COLORS.warning,
   },
+  sideButtonDisabled: {
+    borderColor: COLORS.textRoomsTertiary,
+    opacity: 0.5,
+  },
+  historyContainer: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 10,
+  },
+  historyTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textRoomsSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  historyText: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.textRoomsPrimary,
+  },
+  historyTime: {
+    fontSize: 12,
+    color: COLORS.textRoomsTertiary,
+  },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -272,39 +392,92 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textRoomsSecondary,
   },
-  infoContainer: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  infoRow: {
-    marginBottom: 8,
-  },
-  infoItem: {
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 14,
+    gap: 10,
   },
-  phaseIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    color: COLORS.textRoomsSecondary,
+  statCard: {
     flex: 1,
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  statSub: {
+    fontSize: 10,
+    color: COLORS.textRoomsTertiary,
+    textAlign: 'center',
   },
   participantInfo: {
-    backgroundColor: COLORS.backgroundSecondary,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.backgroundCard,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
   },
   participantText: {
     fontSize: 11,
     color: COLORS.textRoomsTertiary,
-    textAlign: 'center',
     fontStyle: 'italic',
+    flex: 1,
+  },
+  historyContainer: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.borderRoomsMedium,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  historyTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textRoomsSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderRoomsLight,
+  },
+  historyDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  historyText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.textRoomsSecondary,
+  },
+  historyTime: {
+    fontSize: 11,
+    color: COLORS.textRoomsTertiary,
   },
 });
 

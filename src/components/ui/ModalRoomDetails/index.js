@@ -16,7 +16,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { RoomInfoSection, ParticipantsAvatars, JoinButton } from './components';
 import styles from './ModalRoomDetails.styles';
 
-const ModalRoomDetails = ({ visible, roomId, onClose }) => {
+const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
   const { user } = useAuth();
   const [roomDetails, setRoomDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,11 +64,13 @@ const ModalRoomDetails = ({ visible, roomId, onClose }) => {
     if (error) {
       if (error.message === 'Ya estás en esta sala') {
         onClose();
+        navigation?.navigate('Room', { roomId });
       } else {
         Alert.alert('Error', error.message);
       }
     } else {
       onClose();
+      navigation?.navigate('Room', { roomId });
     }
     setJoining(false);
   };
@@ -107,7 +109,7 @@ const ModalRoomDetails = ({ visible, roomId, onClose }) => {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
               {loading ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator color={COLORS.accent} size="large" />
+                  <ActivityIndicator color={COLORS.primary} size="large" />
                   <Text style={styles.loadingText}>Cargando detalles...</Text>
                 </View>
               ) : !roomDetails ? (

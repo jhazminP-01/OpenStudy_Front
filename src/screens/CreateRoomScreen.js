@@ -91,7 +91,7 @@ export default function CreateRoomScreen({ navigation }) {
 
       const materiaSeleccionada = materias.find((item) => item.id === materiaId);
 
-      navigation.navigate('RoomCreated', {
+      navigation.replace('RoomCreated', {
         sala: data,
         materiaNombre: materiaSeleccionada?.nombre,
       });

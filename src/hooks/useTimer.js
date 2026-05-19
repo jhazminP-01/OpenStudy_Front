@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { timerService } from '../services/timer';
 import { useAuth } from './useAuth';
 import { TIMER_STATUSES, TIMER_DEFAULTS } from '../utils/constants';
+import { supabase } from '../../lib/supabase';
 
 /**
  * Hook personalizado para manejar el estado del temporizador Pomodoro
@@ -14,6 +15,7 @@ export const useTimer = (roomId) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isModerator, setIsModerator] = useState(false);
+  const [cycleHistory, setCycleHistory] = useState([]);
   const subscriptionRef = useRef(null);
   const intervalRef = useRef(null);
   const isModeratorRef = useRef(false);
@@ -23,6 +25,32 @@ export const useTimer = (roomId) => {
   // Mantener refs actualizadas para evitar stale closures en el countdown
   useEffect(() => { isModeratorRef.current = isModerator; }, [isModerator]);
   useEffect(() => { userIdRef.current = user?.id; }, [user?.id]);
+
+  // Cargar historial de ciclos desde sesion_pomodoro
+  const loadCycleHistory = useCallback(async () => {
+    if (!roomId) return;
+    try {
+      const { data } = await supabase
+        .from('sesion_pomodoro')
+        .select('duracion, completada, created_at')
+        .eq('sala_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data && data.length > 0) {
+        const history = data.map((item) => ({
+          id: item.created_at,
+          phase: 'estudio',
+          time: new Date(item.created_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }),
+          duracion: item.duracion,
+        }));
+        setCycleHistory(history);
+      }
+    } catch (_) {}
+  }, [roomId]);
+
+  useEffect(() => {
+    loadCycleHistory();
+  }, [loadCycleHistory]);
 
   // Cargar estado inicial del timer
   const loadTimerState = useCallback(async () => {
@@ -334,6 +362,18 @@ export const useTimer = (roomId) => {
     resetTimer,
     updateConfig,
     completeCycle,
+    loadCycleHistory,
+    
+    // Historial
+    cycleHistory,
+    addToCycleHistory: (phase) => {
+      const now = new Date();
+      setCycleHistory((prev) => [{
+        id: now.getTime(),
+        phase,
+        time: now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }),
+      }, ...prev].slice(0, 10));
+    },
     
     // Utilidades
     formatTime: timerService.formatTime,

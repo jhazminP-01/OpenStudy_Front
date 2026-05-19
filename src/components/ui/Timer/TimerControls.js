@@ -10,6 +10,7 @@ const TimerControls = ({
   onPause,
   onResume,
   onReset,
+  onSkip,
   loading = false,
 }) => {
   const [actionLoading, setActionLoading] = useState('');
@@ -78,6 +79,21 @@ const TimerControls = ({
           )}
         </TouchableOpacity>
       )}
+
+      {/* Botón saltar fase (solo para pruebas) */}
+      {isActive && onSkip && (
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => handleAction('skip', onSkip)}
+          disabled={loading || actionLoading !== ''}
+        >
+          {actionLoading === 'skip' ? (
+            <ActivityIndicator color={COLORS.warning} size="small" />
+          ) : (
+            <Ionicons name="play-skip-forward-outline" size={18} color={COLORS.warning} />
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -117,6 +133,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: COLORS.primary,
+    backgroundColor: 'transparent',
+  },
+
+  skipButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.warning,
     backgroundColor: 'transparent',
   },
 });

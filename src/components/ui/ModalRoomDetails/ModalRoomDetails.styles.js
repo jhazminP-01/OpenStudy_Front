@@ -11,11 +11,11 @@ export default StyleSheet.create({
   },
 
   modalContainer: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: SPACING.borderRadiusRooms.card,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '80%',
+    maxHeight: '85%',
+    flexShrink: 1,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.borderRoomsLight,
     shadowColor: '#000',
@@ -27,7 +27,8 @@ export default StyleSheet.create({
   },
 
   modalGradient: {
-    flex: 1,
+    flexShrink: 1,
+    borderRadius: 16,
   },
 
   header: {
@@ -51,7 +52,8 @@ export default StyleSheet.create({
   },
 
   scrollView: {
-    flex: 1,
+    flexShrink: 1,
+    flexGrow: 0,
     paddingHorizontal: SPACING.lg,
   },
 

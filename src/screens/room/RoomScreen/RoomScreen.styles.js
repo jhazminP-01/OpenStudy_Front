@@ -95,6 +95,14 @@ export default StyleSheet.create({
     flex: 1,
   },
 
+  roomTopBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.rooms.paddingX,
+    paddingVertical: SPACING.sm,
+  },
+
   roomInfo: {
     paddingHorizontal: SPACING.rooms.paddingX,
     paddingVertical: SPACING.lg,

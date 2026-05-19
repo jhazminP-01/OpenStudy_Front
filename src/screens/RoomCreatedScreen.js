@@ -87,7 +87,7 @@ export default function RoomCreatedScreen({ navigation, route }) {
 
       <TouchableOpacity
         style={styles.secondaryButton}
-        onPress={() => navigation.navigate('RoomsList', { refresh: true })}
+        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'RoomsList' }] })}
       >
         <Text style={styles.secondaryText}>Volver al inicio</Text>
       </TouchableOpacity>
