@@ -193,7 +193,7 @@ export default StyleSheet.create({
   },
 
   section: {
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.xs,
   },
 
   separator: {
@@ -205,8 +205,9 @@ export default StyleSheet.create({
   sectionCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: SPACING.borderRadius.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.sm,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     alignSelf: 'center',
@@ -216,7 +217,7 @@ export default StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.rooms.sectionTitle,
     color: COLORS.textWhite,
-    marginBottom: SPACING.sm,
+    marginBottom: 4,
   },
 
   participantsText: {
@@ -236,6 +237,17 @@ export default StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.textRoomsTertiary,
     fontStyle: 'italic',
+  },
+
+  timerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: 2,
+  },
+
+  timerEmoji: {
+    fontSize: 18,
   },
 
   actionSection: {
@@ -273,18 +285,18 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: SPACING.xs,
+    gap: 4,
   },
 
   participantAvatar: {
     position: 'relative',
-    marginRight: -8,
+    marginRight: -6,
   },
 
   avatarSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: '#1a1a2e',
   },
@@ -299,9 +311,9 @@ export default StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
@@ -310,9 +322,9 @@ export default StyleSheet.create({
   },
 
   moreParticipants: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.backgroundRoomsMedium,
     justifyContent: 'center',
     alignItems: 'center',

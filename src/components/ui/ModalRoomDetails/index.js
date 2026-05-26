@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   View,
@@ -13,7 +13,10 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../../../styles';
 import { Ionicons } from '@expo/vector-icons';
 import { roomsService } from '../../../services/rooms';
 import { useAuth } from '../../../hooks/useAuth';
+import { supabase } from '../../../../lib/supabase';
+import { timerService } from '../../../services/timer';
 import { RoomInfoSection, ParticipantsAvatars, JoinButton } from './components';
+import TimerSection from './components/TimerSection';
 import styles from './ModalRoomDetails.styles';
 
 const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
@@ -21,6 +24,10 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
   const [roomDetails, setRoomDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [timerData, setTimerData] = useState(undefined);
+  const [timerTimeLeft, setTimerTimeLeft] = useState(0);
+  const timerChannelRef = useRef(null);
+  const timerIntervalRef = useRef(null);
 
   const loadRoomDetails = useCallback(async () => {
     if (!roomId) return;
@@ -37,6 +44,14 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
       }
       
       setRoomDetails(data);
+
+      const { data: timer } = await supabase
+        .from('pomodoro_estado')
+        .select('*')
+        .eq('sala_id', roomId)
+        .maybeSingle();
+      setTimerData(timer);
+      setTimerTimeLeft(timerService.calculateTimeLeft(timer));
     } catch (error) {
       console.error('Error loading room details:', error);
       Alert.alert('Error', 'Ocurrió un error al cargar la sala');
@@ -51,6 +66,46 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
       loadRoomDetails();
     }
   }, [visible, roomId, loadRoomDetails]);
+
+  // Suscripción Realtime + countdown local mientras el modal está abierto
+  useEffect(() => {
+    if (!visible || !roomId) return;
+
+    // Suscripción a cambios en pomodoro_estado
+    timerChannelRef.current = supabase
+      .channel(`pomodoro_modal:${roomId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pomodoro_estado',
+        filter: `sala_id=eq.${roomId}`,
+      }, (payload) => {
+        const newTimer = payload.new;
+        setTimerData(newTimer);
+        setTimerTimeLeft(timerService.calculateTimeLeft(newTimer));
+      })
+      .subscribe();
+
+    // Countdown local de 1 segundo
+    timerIntervalRef.current = setInterval(() => {
+      setTimerData((prev) => {
+        if (!prev || prev.estado !== 'activo') return prev;
+        setTimerTimeLeft((t) => Math.max(0, t - 1));
+        return prev;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerChannelRef.current) {
+        supabase.removeChannel(timerChannelRef.current);
+        timerChannelRef.current = null;
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [visible, roomId]);
 
   const handleJoinRoom = async () => {
     if (!user?.id) {
@@ -134,10 +189,11 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
 
                   {/* Sección de Temporizador en recuadro */}
                   <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Temporizador Pomodoro</Text>
-                    <Text style={styles.placeholderText}>
-                      El temporizador sincronizado estará disponible en la próxima actualización.
-                    </Text>
+                    <View style={styles.timerHeader}>
+                      <Text style={styles.timerEmoji}>🍅</Text>
+                      <Text style={styles.sectionTitle}>Temporizador Pomodoro</Text>
+                    </View>
+                    <TimerSection timerData={timerData ?? null} timeLeft={timerTimeLeft} />
                   </View>
                 </>
               )}

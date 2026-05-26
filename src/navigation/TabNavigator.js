@@ -11,7 +11,8 @@ import RoomDetailsScreen from '../screens/room/RoomDetailsScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 // Screens
-import HomeScreen from '../screens/profile/HomeScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import StatsScreen from '../screens/profile/StatsScreen';
 import CreateRoomScreen from '../screens/CreateRoomScreen';
 
 const Tab = createBottomTabNavigator();
@@ -46,7 +47,8 @@ const RoomsStack = () => (
 // Stack para Profile
 const ProfileStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Screen name="Home" component={ProfileScreen} />
+    <Stack.Screen name="Stats" component={StatsScreen} />
   </Stack.Navigator>
 );
 

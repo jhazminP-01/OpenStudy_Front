@@ -487,15 +487,29 @@ export const timerService = {
       const wasDescanso = currentTimer.fase === 'descanso';
       const wasLong = currentTimer.fase === 'descanso_largo';
 
-      // Insertar sesión completada (solo en fase estudio)
-      if (wasStudy && userId) {
+      // Insertar sesión completada para todos los participantes activos (solo en fase estudio)
+      if (wasStudy) {
         const expectedDuration = currentTimer.duracion_estudio;
-        await supabase.from('sesion_pomodoro').insert({
-          sala_id: roomId,
-          usuario_id: userId,
-          duracion: expectedDuration,
-          completada: true,
-        });
+
+        // Obtener todos los participantes activos de la sala
+        const { data: participants, error: participantsError } = await supabase
+          .from('participacion')
+          .select('usuario_id')
+          .eq('sala_id', roomId)
+          .eq('estado_conexion', 'activo')
+          .eq('esta_expulsado', false);
+
+        if (!participantsError && participants && participants.length > 0) {
+          // Preparar registros para insertar en bulk
+          const sesiones = participants.map((p) => ({
+            sala_id: roomId,
+            usuario_id: p.usuario_id,
+            duracion: expectedDuration,
+            completada: true,
+          }));
+
+          await supabase.from('sesion_pomodoro').insert(sesiones);
+        }
       }
 
       // Calcular siguiente fase
