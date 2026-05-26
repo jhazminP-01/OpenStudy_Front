@@ -10,7 +10,7 @@ import TimerConfig from './TimerConfig';
 import CycleNotification from './CycleNotification';
 import { COLORS } from '../../../styles';
 
-const TimerTab = ({ roomId }) => {
+const TimerTab = ({ roomId, onOpenModeration, pendingReports = 0 }) => {
   const [configVisible, setConfigVisible] = useState(false);
   const [configuredValues, setConfiguredValues] = useState(null);
   const prevPhaseRef = useRef(null);
@@ -63,7 +63,7 @@ const TimerTab = ({ roomId }) => {
   }, [timerStatePhaseKey]);
 
   const handleModerationPress = () => {
-    Alert.alert('Moderación', 'El panel de moderación estará disponible próximamente.');
+    if (onOpenModeration) onOpenModeration();
   };
 
   const handleSaveConfig = async (config) => {
@@ -169,6 +169,19 @@ const TimerTab = ({ roomId }) => {
                 onPress={handleModerationPress}
               >
                 <Ionicons name="shield-outline" size={22} color={COLORS.warning} />
+                {pendingReports > 0 && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: COLORS.error,
+                    borderWidth: 1.5,
+                    borderColor: COLORS.backgroundDark,
+                  }} />
+                )}
               </TouchableOpacity>
             </>
           )}
@@ -240,8 +253,8 @@ const TimerTab = ({ roomId }) => {
             <Ionicons name="time-outline" size={14} color={COLORS.textRoomsSecondary} />
             <Text style={styles.historyTitle}>Historial de ciclos</Text>
           </View>
-          {cycleHistory.map((item) => (
-            <View key={item.id} style={styles.historyItem}>
+          {cycleHistory.map((item, index) => (
+            <View key={item.id || index} style={styles.historyItem}>
               <View style={[styles.historyDot, {
                 backgroundColor: item.phase === 'estudio' ? COLORS.primary :
                                  item.phase === 'descanso_largo' ? COLORS.accent : COLORS.secondary

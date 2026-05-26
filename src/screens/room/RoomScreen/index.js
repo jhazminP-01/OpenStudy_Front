@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../../styles';
 import { roomsService } from '../../../services/rooms';
+import { reportsService } from '../../../services/reports';
 import { supabase } from '../../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import ParticipantsScreen from '../ParticipantsScreen';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
+import InAppNotification from '../../../components/ui/InAppNotification';
+import ModerationPanel from '../../../components/moderation/ModerationPanel';
 import { RoomHeader, RoomTabBar, RoomInfoTab, ChatTab } from './components';
 import styles from './RoomScreen.styles';
 
@@ -22,7 +25,11 @@ const RoomScreen = ({ route, navigation }) => {
   const [leaving, setLeaving] = useState(false);
   const [activeTab, setActiveTab] = useState('room'); // 'room', 'chat', 'participants'
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showModerationPanel, setShowModerationPanel] = useState(false);
+  const [pendingReports, setPendingReports] = useState(0);
+  const [modNotification, setModNotification] = useState({ visible: false, variant: 'warning', title: '', message: '' });
   const { user } = useAuth();
+  const reportsChannelRef = useRef(null);
 
   let subscription = null;
 
@@ -39,8 +46,108 @@ const RoomScreen = ({ route, navigation }) => {
       if (subscription) {
         supabase.removeChannel(subscription);
       }
+
+      if (reportsChannelRef.current) {
+        reportsChannelRef.current.unsubscribe();
+        reportsChannelRef.current = null;
+      }
     };
   }, [roomId, user?.id]);
+
+  // Escuchar advertencias/expulsiones en la propia participación
+  const prevAdvertenciasRef = useRef(null);
+
+  useEffect(() => {
+    if (!user?.id || !roomId) return;
+
+    const moderationChannel = supabase
+      .channel(`participacion-mod-${roomId}-${user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'participacion',
+        filter: `sala_id=eq.${roomId}`,
+      }, (payload) => {
+        const row = payload.new;
+        if (row.usuario_id !== user.id) return;
+
+        // Expulsado
+        if (row.esta_expulsado) {
+          setModNotification({
+            visible: true,
+            variant: 'error',
+            title: 'Has sido expulsado',
+            message: 'No puedes reingresar a esta sala.',
+          });
+          setTimeout(() => navigation.goBack(), 3500);
+          return;
+        }
+
+        // Advertencia nueva
+        if (row.advertencias > 0 && row.advertencias !== prevAdvertenciasRef.current) {
+          prevAdvertenciasRef.current = row.advertencias;
+          const extra = row.advertencias === 2 ? ' — Una más y serás expulsado.' : '';
+          setModNotification({
+            visible: true,
+            variant: 'warning',
+            title: 'Has recibido una advertencia',
+            message: `Advertencias: ${row.advertencias}/3${extra}`,
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(moderationChannel);
+    };
+  }, [roomId, user?.id, navigation]);
+
+  // Cargar reportes pendientes y suscribirse (solo moderador)
+  useEffect(() => {
+    if (!roomData || !user?.id) return;
+
+    const currentParticipation = roomData.participacion?.find(
+      (p) => p.usuario_id === user.id
+    );
+    const isMod = currentParticipation?.rol === 'moderador';
+    if (!isMod) return;
+
+    const loadPendingCount = async () => {
+      const { data } = await reportsService.getReports(roomId);
+      setPendingReports(data?.length || 0);
+    };
+
+    loadPendingCount();
+
+    reportsChannelRef.current = supabase
+      .channel(`reportes-sala-${roomId}-badge`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'reporte',
+      }, (payload) => {
+        if (payload.new.sala_id === roomId) {
+          setPendingReports((prev) => prev + 1);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'reporte',
+      }, (payload) => {
+        if (payload.new.sala_id === roomId && payload.new.estado !== 'pendiente') {
+          setPendingReports((prev) => Math.max(0, prev - 1));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      if (reportsChannelRef.current) {
+        supabase.removeChannel(reportsChannelRef.current);
+        reportsChannelRef.current = null;
+      }
+    };
+  }, [roomData, user?.id, roomId]);
 
   const setupRealtimeSubscription = () => {
     subscription = supabase
@@ -163,6 +270,11 @@ const RoomScreen = ({ route, navigation }) => {
     p => p.estado_conexion === 'activo' && !p.esta_expulsado
   ).length || 0;
 
+  const currentParticipation = roomData.participacion?.find(
+    (p) => p.usuario_id === user?.id
+  );
+  const isModerator = currentParticipation?.rol === 'moderador';
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'room':
@@ -171,6 +283,8 @@ const RoomScreen = ({ route, navigation }) => {
             roomData={roomData}
             participantsCount={participantsCount}
             roomId={roomId}
+            onOpenModeration={() => setShowModerationPanel(true)}
+            pendingReports={pendingReports}
           />
         );
       case 'chat':
@@ -216,6 +330,27 @@ const RoomScreen = ({ route, navigation }) => {
         loading={leaving}
         icon="exit-outline"
         iconColor={COLORS.error}
+      />
+
+      <ModerationPanel
+        visible={showModerationPanel}
+        onClose={() => {
+          setShowModerationPanel(false);
+          // Recargar contador al cerrar
+          reportsService.getReports(roomId).then(({ data }) => {
+            setPendingReports(data?.length || 0);
+          });
+        }}
+        salaId={roomId}
+      />
+
+      <InAppNotification
+        visible={modNotification.visible}
+        variant={modNotification.variant}
+        title={modNotification.title}
+        message={modNotification.message}
+        duration={modNotification.variant === 'error' ? 3500 : 5000}
+        onDismiss={() => setModNotification((prev) => ({ ...prev, visible: false }))}
       />
     </LinearGradient>
   );

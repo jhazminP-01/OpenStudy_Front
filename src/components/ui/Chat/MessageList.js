@@ -11,6 +11,7 @@ const MessageList = ({
   loading = false,
   onLoadMore,
   hasMore = false,
+  onLongPressMessage,
 }) => {
   const flatListRef = useRef(null);
 
@@ -48,6 +49,7 @@ const MessageList = ({
         message={message}
         isOwn={isOwn}
         user={message.usuario}
+        onLongPress={!isOwn && onLongPressMessage ? () => onLongPressMessage(message) : undefined}
       />
     );
   };

@@ -8,6 +8,7 @@ import {
   MessageInput,
   TypingIndicator,
 } from '../../components/ui/Chat';
+import ReportMessageModal from '../../components/moderation/ReportMessageModal';
 
 const ChatScreen = ({ route }) => {
   const { roomId } = route.params;
@@ -16,6 +17,8 @@ const ChatScreen = ({ route }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
   const subscriptionRef = useRef(null);
 
   // Cargar mensajes iniciales
@@ -158,10 +161,23 @@ const ChatScreen = ({ route }) => {
           messages={messages}
           currentUserId={user?.id}
           loading={loading}
+          onLongPressMessage={(message) => {
+            if (message.usuario_id !== user?.id) {
+              setSelectedMessage(message);
+              setReportModalVisible(true);
+            }
+          }}
         />
 
         {/* Input de mensaje */}
         <MessageInput onSend={handleSendMessage} />
+
+        <ReportMessageModal
+          visible={reportModalVisible}
+          onClose={() => { setReportModalVisible(false); setSelectedMessage(null); }}
+          message={selectedMessage}
+          salaId={roomId}
+        />
       </View>
     </KeyboardAvoidingView>
   );

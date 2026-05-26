@@ -5,7 +5,7 @@ import { COLORS } from '../../../../styles';
 import { TimerTab } from '../../../../components/ui/Timer';
 import styles from '../RoomScreen.styles';
 
-const RoomInfoTab = ({ roomData, participantsCount, roomId }) => {
+const RoomInfoTab = ({ roomData, participantsCount, roomId, onOpenModeration, pendingReports }) => {
   return (
     <ScrollView style={styles.tabContent}>
       {/* Contador de usuarios (izq) y código de invitación (der) */}
@@ -21,7 +21,7 @@ const RoomInfoTab = ({ roomData, participantsCount, roomId }) => {
       </View>
 
       {/* Temporizador Pomodoro real */}
-      <TimerTab roomId={roomId} />
+      <TimerTab roomId={roomId} onOpenModeration={onOpenModeration} pendingReports={pendingReports} />
     </ScrollView>
   );
 };

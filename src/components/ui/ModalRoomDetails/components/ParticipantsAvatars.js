@@ -12,8 +12,8 @@ const ParticipantsAvatars = ({ participants, maxVisible = 8 }) => {
   return (
     <View style={styles.section}>
       <View style={styles.avatarsContainer}>
-        {participants.slice(0, maxVisible).map((participant) => (
-          <View key={participant.id} style={styles.participantAvatar}>
+        {participants.slice(0, maxVisible).map((participant, index) => (
+          <View key={participant.id || index} style={styles.participantAvatar}>
             <View style={[styles.avatarSmall, styles.defaultAvatarSmall]}>
               <Ionicons name="person" size={16} color={COLORS.textWhite} />
             </View>

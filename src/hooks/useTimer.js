@@ -369,7 +369,7 @@ export const useTimer = (roomId) => {
     addToCycleHistory: (phase) => {
       const now = new Date();
       setCycleHistory((prev) => [{
-        id: now.getTime(),
+        id: `${now.getTime()}-${Math.random()}`,
         phase,
         time: now.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }),
       }, ...prev].slice(0, 10));

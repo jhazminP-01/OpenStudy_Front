@@ -1,16 +1,19 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { roomsService } from '../../services/rooms';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
+import ReportUserModal from '../../components/moderation/ReportUserModal';
 
 const ParticipantsScreen = ({ route }) => {
   const { roomId } = route.params;
   const { user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const channelRef = useRef(null);
 
   const loadParticipants = useCallback(async () => {
@@ -108,6 +111,18 @@ const ParticipantsScreen = ({ route }) => {
             )}
           </View>
         </View>
+
+        {!isCurrentUser && (
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => {
+              setSelectedUser({ id: item.usuario_id, nombre_completo: item.nombre_completo });
+              setReportModalVisible(true);
+            }}
+          >
+            <Ionicons name="ellipsis-vertical" size={20} color={COLORS.textRoomsTertiary} />
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -133,6 +148,13 @@ const ParticipantsScreen = ({ route }) => {
             <Text style={styles.emptyText}>No hay participantes</Text>
           </View>
         }
+      />
+
+      <ReportUserModal
+        visible={reportModalVisible}
+        onClose={() => { setReportModalVisible(false); setSelectedUser(null); }}
+        reportedUser={selectedUser}
+        salaId={roomId}
       />
     </View>
   );
@@ -292,6 +314,14 @@ const styles = StyleSheet.create({
     color: COLORS.textRoomsMuted,
     marginTop: SPACING.md,
     textAlign: 'center',
+  },
+
+  menuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
