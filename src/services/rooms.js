@@ -121,9 +121,22 @@ export const roomsService = {
       return { data, error };
     }
 
-    // Por ahora, no obtenemos datos del creador ni de usuarios
-    // ya que la tabla 'usuario' no existe en la base de datos
-    // Usaremos solo los datos básicos de participaciones
+    // Obtener nombres de usuarios de las participaciones (dos consultas, sin FK)
+    const usuarioIds = (data.participacion || []).map(p => p.usuario_id).filter(Boolean);
+    if (usuarioIds.length > 0) {
+      const { data: usuarios } = await supabase
+        .from('usuario')
+        .select('id, nombre_completo')
+        .in('id', usuarioIds);
+
+      const usuarioMap = {};
+      (usuarios || []).forEach(u => { usuarioMap[u.id] = u.nombre_completo; });
+
+      data.participacion = data.participacion.map(p => ({
+        ...p,
+        nombre_completo: usuarioMap[p.usuario_id] || null,
+      }));
+    }
 
     return { data, error: null };
   },

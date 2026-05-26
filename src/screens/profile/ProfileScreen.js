@@ -54,7 +54,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {
+      // Si no hay internet, forzar cierre de sesión local
+      await supabase.auth.signOut({ scope: 'local' });
+    }
   };
 
   const initial = profile.nombre_completo?.charAt(0)?.toUpperCase() || '?';

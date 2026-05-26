@@ -181,8 +181,8 @@ export const useTimer = (roomId) => {
           const newTime = prevTime - 1;
 
           if (newTime <= 0) {
-            // Solo el moderador dispara la transición de ciclo
-            if (isModeratorRef.current && !cycleCompletingRef.current) {
+            // Cualquier cliente puede disparar la transición (completeCycle es idempotente)
+            if (!cycleCompletingRef.current) {
               cycleCompletingRef.current = true;
               setTimeout(() => {
                 timerService.completeCycle(roomId, userIdRef.current)
@@ -310,13 +310,13 @@ export const useTimer = (roomId) => {
 
   const completeCycle = useCallback(async () => {
     if (!user?.id) return;
-    const { data, error } = await timerService.completeCycle(roomId, user.id);
+    const { data, error } = await timerService.completeCycle(roomId, user.id, { force: true });
     if (error) console.error('Error completing cycle:', error);
     return data;
   }, [roomId, user?.id]);
 
   // Sonidos ambientales - DEBE llamarse antes de declaraciones derivadas
-  const { playAmbientSound, stopAmbientSound, reloadConfig, soundEnabled } = useAmbientSound(user?.id);
+  const { playAmbientSound, stopAmbientSound, reloadConfig, soundEnabled, isPlaying } = useAmbientSound(user?.id);
 
   // Estados derivados
   const phase = timerState?.fase || 'estudio';
@@ -351,19 +351,6 @@ export const useTimer = (roomId) => {
       playAmbientSound(timerStateRef.current.fase);
     }
   }, [soundEnabled]);
-
-  // Manejar resume desde SoundsScreen: recargar config y reproducir nuevo sonido
-  useEffect(() => {
-    const unsubscribe = ambientSoundControl.subscribe(async (event) => {
-      if (event === 'resume') {
-        await reloadConfig();
-        if (timerStateRef.current?.estado === 'activo') {
-          playAmbientSound(timerStateRef.current.fase);
-        }
-      }
-    });
-    return unsubscribe;
-  }, [reloadConfig, playAmbientSound]);
 
   // Recargar config de sonidos al iniciar
   useEffect(() => {

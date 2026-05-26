@@ -43,6 +43,18 @@ export const ROOM_STATUSES = {
   ARCHIVED: 'archived',
 };
 
+export const INAPPROPRIATE_WORDS = [
+  // Groserías comunes en español
+  'puta', 'puto', 'mierda', 'culo', 'coño', 'pendejo', 'pendeja',
+  'idiota', 'imbecil', 'estupido', 'estupida', 'cabron', 'cabrona',
+  'hdp', 'ctm', 'concha', 'verga', 'chinga', 'chingada', 'joder',
+  'gilipollas', 'subnormal', 'maricón', 'maricon', 'perra', 'zorra',
+  'bastardo', 'bastarda', 'malparido', 'gonorrea', 'hijueputa',
+  // Acoso / discriminación
+  'negro', 'negra', 'indio', 'india', 'gordo', 'gorda', 'feo', 'fea',
+  'retrasado', 'mongolico', 'tarado',
+];
+
 export const NOTIFICATION_TYPES = {
   TIMER_FINISHED: 'timer_finished',
   BREAK_FINISHED: 'break_finished',

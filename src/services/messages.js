@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { INAPPROPRIATE_WORDS } from '../utils/constants';
 
 /**
  * Servicio para manejar mensajes de chat en las salas
@@ -165,24 +166,31 @@ export const messagesService = {
     const trimmed = content?.trim() || '';
 
     if (trimmed.length === 0) {
-      return { valid: false, error: 'El mensaje no puede estar vacío' };
+      return { valid: false, error: 'El mensaje no puede estar vacío', censored: false, censoredContent: '' };
     }
 
     if (trimmed.length > 500) {
-      return { valid: false, error: 'El mensaje no puede superar los 500 caracteres' };
+      return { valid: false, error: 'El mensaje no puede superar los 500 caracteres', censored: false, censoredContent: '' };
     }
 
-    // Filtro básico de contenido inapropiado (HU-14 placeholder)
-    const inappropriateWords = ['spam', 'troll']; // Lista básica
-    const hasInappropriate = inappropriateWords.some((word) =>
-      trimmed.toLowerCase().includes(word)
-    );
+    // HU-14: Detectar y censurar palabras inapropiadas
+    let censoredContent = trimmed;
+    let hasCensored = false;
 
-    if (hasInappropriate) {
-      return { valid: false, error: 'El mensaje contiene contenido inapropiado' };
-    }
+    INAPPROPRIATE_WORDS.forEach((word) => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      if (regex.test(censoredContent)) {
+        hasCensored = true;
+        censoredContent = censoredContent.replace(regex, '*'.repeat(word.length));
+      }
+    });
 
-    return { valid: true, error: null };
+    return {
+      valid: true,
+      error: null,
+      censored: hasCensored,
+      censoredContent: hasCensored ? censoredContent : trimmed,
+    };
   },
 
   /**

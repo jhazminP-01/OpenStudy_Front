@@ -4,12 +4,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppNavigator } from './src/navigation/AppNavigator';
+import OfflineBanner from './src/components/common/OfflineBanner';
 
 export default function App() {
   return (
     <NavigationContainer>
       <View style={styles.container}>
         <AppNavigator />
+        <OfflineBanner />
         <StatusBar style="light" />
       </View>
     </NavigationContainer>

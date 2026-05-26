@@ -469,7 +469,7 @@ export const timerService = {
    * @param {number} roomId - ID de la sala
    * @param {string} userId - ID del usuario moderador
    */
-  completeCycle: async (roomId, userId) => {
+  completeCycle: async (roomId, userId, { force = false } = {}) => {
     try {
       const now = new Date().toISOString();
 
@@ -481,6 +481,14 @@ export const timerService = {
 
       if (timerError || !currentTimer) {
         return { data: null, error: { message: 'No hay temporizador activo' } };
+      }
+
+      // Solo verificar tiempo si es transición automática (no skip manual)
+      if (!force) {
+        const calculatedLeft = timerService.calculateTimeLeft(currentTimer);
+        if (calculatedLeft > 5) {
+          return { data: currentTimer, error: null };
+        }
       }
 
       const wasStudy = currentTimer.fase === 'estudio';

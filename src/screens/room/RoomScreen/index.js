@@ -16,6 +16,7 @@ import ConfirmModal from '../../../components/ui/ConfirmModal';
 import InAppNotification from '../../../components/ui/InAppNotification';
 import ModerationPanel from '../../../components/moderation/ModerationPanel';
 import { RoomHeader, RoomTabBar, RoomInfoTab, ChatTab } from './components';
+import { ambientSoundControl } from '../../../utils/ambientSoundControl';
 import styles from './RoomScreen.styles';
 
 const RoomScreen = ({ route, navigation }) => {
@@ -40,6 +41,13 @@ const RoomScreen = ({ route, navigation }) => {
       setActiveTab('room');
     }
   }, [activeTab, navigation]);
+
+  // Pausar sonido al ir a sonidos (SoundsScreen maneja el resume al volver)
+  useEffect(() => {
+    if (activeTab === 'sounds') {
+      ambientSoundControl.pause();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     loadRoomDetails();
@@ -283,27 +291,6 @@ const RoomScreen = ({ route, navigation }) => {
   );
   const isModerator = currentParticipation?.rol === 'moderador';
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'room':
-        return (
-          <RoomInfoTab
-            roomData={roomData}
-            participantsCount={participantsCount}
-            roomId={roomId}
-            onOpenModeration={() => setShowModerationPanel(true)}
-            pendingReports={pendingReports}
-          />
-        );
-      case 'chat':
-        return <ChatTab roomId={roomId} />;
-      case 'participants':
-        return <ParticipantsScreen route={{ params: { roomId } }} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <LinearGradient
       colors={COLORS.gradientRooms}
@@ -316,9 +303,21 @@ const RoomScreen = ({ route, navigation }) => {
         leaving={leaving}
       />
 
-      {/* Tab Content */}
-      <View style={styles.contentContainer}>
-        {renderTabContent()}
+      {/* Tabs siempre montados para mantener useTimer activo entre tabs */}
+      <View style={[styles.contentContainer, activeTab !== 'room' && { display: 'none' }]}>
+        <RoomInfoTab
+          roomData={roomData}
+          participantsCount={participantsCount}
+          roomId={roomId}
+          onOpenModeration={() => setShowModerationPanel(true)}
+          pendingReports={pendingReports}
+        />
+      </View>
+      <View style={[styles.contentContainer, activeTab !== 'chat' && { display: 'none' }]}>
+        <ChatTab roomId={roomId} />
+      </View>
+      <View style={[styles.contentContainer, activeTab !== 'participants' && { display: 'none' }]}>
+        <ParticipantsScreen route={{ params: { roomId } }} />
       </View>
 
       {/* Tab Bar */}

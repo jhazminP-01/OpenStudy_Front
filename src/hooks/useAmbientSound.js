@@ -263,16 +263,21 @@ export const useAmbientSound = (userId) => {
     return () => clearInterval(interval);
   }, [stopAmbientSound]);
 
-  // Escuchar evento de pausa desde SoundsScreen
+  // Escuchar eventos de pausa/reanudación desde SoundsScreen
   useEffect(() => {
-    const unsubscribe = ambientSoundControl.subscribe((event) => {
+    const unsubscribe = ambientSoundControl.subscribe(async (event) => {
       if (event === 'pause') {
         stopAmbientSound(true);
+      } else if (event === 'resume') {
+        await loadSoundConfig();
+        // Solo reproducir si no hay sonido activo (evita reiniciar en chat/participantes)
+        if (currentPhaseRef.current && soundEnabledRef.current && !soundRef.current && !ambientSoundControl.isPaused()) {
+          playAmbientSound(currentPhaseRef.current);
+        }
       }
-      // 'resume' lo maneja useTimer (tiene acceso a timerState)
     });
     return unsubscribe;
-  }, [stopAmbientSound]);
+  }, [stopAmbientSound, loadSoundConfig, playAmbientSound]);
 
   return {
     playAmbientSound,
