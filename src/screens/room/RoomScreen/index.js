@@ -33,6 +33,14 @@ const RoomScreen = ({ route, navigation }) => {
 
   let subscription = null;
 
+  // Navegar a sonidos cuando se selecciona el tab - DEBE estar antes de returns condicionales
+  useEffect(() => {
+    if (activeTab === 'sounds') {
+      navigation.navigate('RoomSounds');
+      setActiveTab('room');
+    }
+  }, [activeTab, navigation]);
+
   useEffect(() => {
     loadRoomDetails();
     setupRealtimeSubscription();

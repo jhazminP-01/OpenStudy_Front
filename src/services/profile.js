@@ -81,9 +81,25 @@ export const profileService = {
 
   updateConfig: async (userId, config) => {
     try {
+      // Obtener config actual para mergear con los cambios
+      const { data: existing } = await supabase
+        .from('configuracion_usuario')
+        .select('*')
+        .eq('usuario_id', userId)
+        .maybeSingle();
+
+      // Remove 'id' from existing config to avoid conflict with GENERATED ALWAYS
+      const { id, ...existingWithoutId } = existing || {};
+      const mergedConfig = {
+        ...(existingWithoutId || DEFAULT_CONFIG),
+        ...config,
+        usuario_id: userId,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from('configuracion_usuario')
-        .upsert({ usuario_id: userId, ...config, updated_at: new Date().toISOString() }, { onConflict: 'usuario_id' })
+        .upsert(mergedConfig, { onConflict: 'usuario_id' })
         .select()
         .single();
       return { data, error };

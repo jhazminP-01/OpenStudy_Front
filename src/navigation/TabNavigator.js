@@ -13,6 +13,7 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 // Screens
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import StatsScreen from '../screens/profile/StatsScreen';
+import SoundsScreen from '../screens/profile/SoundsScreen';
 import CreateRoomScreen from '../screens/CreateRoomScreen';
 
 const Tab = createBottomTabNavigator();
@@ -41,6 +42,10 @@ const RoomsStack = () => (
       name="RoomDetails" 
       component={RoomDetailsScreen}
     />
+    <Stack.Screen 
+      name="RoomSounds" 
+      component={SoundsScreen}
+    />
   </Stack.Navigator>
 );
 
@@ -49,6 +54,7 @@ const ProfileStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Home" component={ProfileScreen} />
     <Stack.Screen name="Stats" component={StatsScreen} />
+    <Stack.Screen name="Sounds" component={SoundsScreen} />
   </Stack.Navigator>
 );
 
@@ -98,7 +104,7 @@ export const TabNavigator = () => {
           title: 'Salas',
           tabBarStyle: ((route) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'RoomsList';
-            if (routeName === 'Room') {
+            if (routeName === 'Room' || routeName === 'RoomSounds') {
               return { display: 'none' };
             }
             return styles.tabBar;

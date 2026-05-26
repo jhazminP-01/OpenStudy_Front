@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { timerService } from '../services/timer';
 import { useAuth } from './useAuth';
+import { useAmbientSound } from './useAmbientSound';
 import { TIMER_STATUSES, TIMER_DEFAULTS } from '../utils/constants';
 import { supabase } from '../../lib/supabase';
+import { ambientSoundControl } from '../utils/ambientSoundControl';
 
 /**
  * Hook personalizado para manejar el estado del temporizador Pomodoro
@@ -313,6 +315,9 @@ export const useTimer = (roomId) => {
     return data;
   }, [roomId, user?.id]);
 
+  // Sonidos ambientales - DEBE llamarse antes de declaraciones derivadas
+  const { playAmbientSound, stopAmbientSound, reloadConfig, soundEnabled } = useAmbientSound(user?.id);
+
   // Estados derivados
   const phase = timerState?.fase || 'estudio';
   const status = timerState?.estado || 'stopped';
@@ -324,6 +329,46 @@ export const useTimer = (roomId) => {
   const isLongBreakPhase = phase === 'descanso_largo';
   const ciclosCompletados = timerState?.ciclos_completados ?? 0;
   const ciclosParaDescansoLargo = timerState?.ciclos_antes_descanso_largo ?? TIMER_DEFAULTS.CYCLES_BEFORE_LONG_BREAK;
+
+  // Ref para acceder a timerState actual sin stale closures
+  const timerStateRef = useRef(timerState);
+  useEffect(() => { timerStateRef.current = timerState; }, [timerState]);
+
+  // Reproducir/detener sonidos según estado del timer
+  useEffect(() => {
+    if (!timerState) return;
+    if (timerState.estado === 'activo') {
+      playAmbientSound(timerState.fase);
+    } else {
+      stopAmbientSound();
+    }
+    return () => { stopAmbientSound(); };
+  }, [timerState?.estado, timerState?.fase]);
+
+  // Cuando se des-silencia, reanudar si el timer está activo
+  useEffect(() => {
+    if (soundEnabled && timerStateRef.current?.estado === 'activo') {
+      playAmbientSound(timerStateRef.current.fase);
+    }
+  }, [soundEnabled]);
+
+  // Manejar resume desde SoundsScreen: recargar config y reproducir nuevo sonido
+  useEffect(() => {
+    const unsubscribe = ambientSoundControl.subscribe(async (event) => {
+      if (event === 'resume') {
+        await reloadConfig();
+        if (timerStateRef.current?.estado === 'activo') {
+          playAmbientSound(timerStateRef.current.fase);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [reloadConfig, playAmbientSound]);
+
+  // Recargar config de sonidos al iniciar
+  useEffect(() => {
+    reloadConfig();
+  }, [reloadConfig]);
 
   // Formato de tiempo
   const formattedTime = timerService.formatTime(timeLeft);
@@ -375,6 +420,10 @@ export const useTimer = (roomId) => {
       }, ...prev].slice(0, 10));
     },
     
+    // Sonidos ambientales
+    playAmbientSound,
+    stopAmbientSound,
+
     // Utilidades
     formatTime: timerService.formatTime,
   };

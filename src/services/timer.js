@@ -529,7 +529,7 @@ export const timerService = {
         }
       } else {
         nextFase = 'estudio';
-        nextTiempo = currentTimer.duracion_estudio_siguiente * 60;
+        nextTiempo = (currentTimer.duracion_estudio_siguiente ?? currentTimer.duracion_estudio) * 60;
         if (wasLong) nuevosCiclos = 0;
       }
 

@@ -3,6 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { COLORS } from '../../styles';
 import { messagesService } from '../../services/messages';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../../lib/supabase';
 import {
   MessageList,
   MessageInput,
@@ -51,18 +52,28 @@ const ChatScreen = ({ route }) => {
   }, [roomId]);
 
   // Manejar actualizaciones en tiempo real
-  const handleRealtimeUpdate = (payload) => {
+  const handleRealtimeUpdate = async (payload) => {
     const { eventType, new: newRecord, old: oldRecord } = payload;
 
     switch (eventType) {
-      case 'INSERT':
-        // Agregar nuevo mensaje si no existe
+      case 'INSERT': {
+        // Obtener nombre del usuario del nuevo mensaje
+        const { data: userData } = await supabase
+          .from('usuario')
+          .select('id, nombre_completo')
+          .eq('id', newRecord.usuario_id)
+          .single();
+        const msgWithUser = {
+          ...newRecord,
+          usuario: { nombre: userData?.nombre_completo || null },
+        };
         setMessages((prev) => {
           const exists = prev.some((msg) => msg.id === newRecord.id);
           if (exists) return prev;
-          return [...prev, newRecord];
+          return [...prev, msgWithUser];
         });
         break;
+      }
 
       case 'UPDATE':
         // Actualizar mensaje existente

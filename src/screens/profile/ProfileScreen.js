@@ -179,7 +179,7 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.soundSubCards}>
               <TouchableOpacity
                 style={styles.soundRow}
-                onPress={() => Alert.alert('Próximamente', 'Configuración de sonidos disponible en HU-15B.')}
+                onPress={() => navigation.navigate('Sounds')}
                 activeOpacity={0.7}
               >
                 <Text style={styles.soundLabel}>Sonido de enfoque</Text>
@@ -193,7 +193,7 @@ const ProfileScreen = ({ navigation }) => {
 
               <TouchableOpacity
                 style={styles.soundRow}
-                onPress={() => Alert.alert('Próximamente', 'Configuración de sonidos disponible en HU-15B.')}
+                onPress={() => navigation.navigate('Sounds')}
                 activeOpacity={0.7}
               >
                 <Text style={styles.soundLabel}>Sonido de descanso</Text>

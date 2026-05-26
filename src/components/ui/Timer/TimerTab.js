@@ -47,7 +47,24 @@ const TimerTab = ({ roomId, onOpenModeration, pendingReports = 0 }) => {
     completeCycle,
     cycleHistory,
     addToCycleHistory,
+    playAmbientSound,
+    stopAmbientSound,
   } = useTimer(roomId);
+
+  // Toggle combinado: notificaciones + sonido ambiental
+  const handleToggleSound = async () => {
+    const newEnabled = !soundEnabled;
+    toggleSound();
+    if (newEnabled) {
+      // Des-silenciar: reanudar sonido si el timer está activo
+      if (timerState?.estado === 'activo') {
+        playAmbientSound(timerState.fase);
+      }
+    } else {
+      // Silenciar: detener sonido ambiental
+      stopAmbientSound(true);
+    }
+  };
 
   // Detectar cambio de fase para mostrar notificación
   const timerStatePhaseKey = timerState?.fase + ':' + timerState?.ciclos_completados;
@@ -147,7 +164,7 @@ const TimerTab = ({ roomId, onOpenModeration, pendingReports = 0 }) => {
           {/* Botón de sonido (todos los usuarios) */}
           <TouchableOpacity
             style={[styles.sideButton, !soundEnabled && styles.sideButtonDisabled]}
-            onPress={toggleSound}
+            onPress={handleToggleSound}
           >
             <Ionicons
               name={soundEnabled ? 'volume-high-outline' : 'volume-mute-outline'}
@@ -254,7 +271,7 @@ const TimerTab = ({ roomId, onOpenModeration, pendingReports = 0 }) => {
             <Text style={styles.historyTitle}>Historial de ciclos</Text>
           </View>
           {cycleHistory.map((item, index) => (
-            <View key={item.id || index} style={styles.historyItem}>
+            <View key={`${item.id || 'item'}-${index}`} style={styles.historyItem}>
               <View style={[styles.historyDot, {
                 backgroundColor: item.phase === 'estudio' ? COLORS.primary :
                                  item.phase === 'descanso_largo' ? COLORS.accent : COLORS.secondary

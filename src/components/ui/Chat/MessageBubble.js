@@ -14,10 +14,14 @@ const MessageBubble = ({
 }) => {
   const formatTime = messagesService.formatMessageTime;
 
-  const getInitials = (userId) => {
-    if (!userId) return '?';
-    return userId.charAt(0).toUpperCase();
+  const getInitials = (nombre) => {
+    if (!nombre) return '?';
+    const parts = nombre.trim().split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].charAt(0).toUpperCase();
   };
+
+  const userName = user?.nombre || message.usuario?.nombre || null;
 
   return (
     <View
@@ -29,7 +33,7 @@ const MessageBubble = ({
       {/* Avatar (solo para mensajes de otros) */}
       {!isOwn && (
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(message.usuario_id)}</Text>
+          <Text style={styles.avatarText}>{getInitials(userName)}</Text>
         </View>
       )}
 
@@ -42,6 +46,9 @@ const MessageBubble = ({
           isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
         ]}
       >
+        {!isOwn && userName && (
+          <Text style={styles.senderName}>{userName}</Text>
+        )}
         <Text style={styles.messageText}>{message.contenido}</Text>
         <View style={styles.messageMeta}>
           {message.censurado && (

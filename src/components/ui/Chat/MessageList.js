@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { COLORS } from '../../../styles';
 import MessageBubble from './MessageBubble';
 import DateSeparator from './DateSeparator';
@@ -106,8 +106,5 @@ const MessageList = ({
     />
   );
 };
-
-// Import Text for empty state
-import { Text } from 'react-native';
 
 export default MessageList;

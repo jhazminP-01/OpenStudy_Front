@@ -8,6 +8,7 @@ const TABS = [
   { id: 'room', label: 'Sala', icon: 'home', iconOutline: 'home-outline' },
   { id: 'chat', label: 'Chat', icon: 'chatbubbles', iconOutline: 'chatbubbles-outline' },
   { id: 'participants', label: 'Persona', icon: 'people', iconOutline: 'people-outline' },
+  { id: 'sounds', label: 'Sonidos', icon: 'musical-note', iconOutline: 'musical-note-outline' },
 ];
 
 const RoomTabBar = ({ activeTab, onTabChange }) => {

@@ -46,7 +46,7 @@ export const messagesService = {
    */
   getMessages: async (roomId, limit = 50, offset = 0) => {
     try {
-      const { data, error } = await supabase
+      const { data: messages, error } = await supabase
         .from('mensaje')
         .select('*')
         .eq('sala_id', roomId)
@@ -55,8 +55,24 @@ export const messagesService = {
         .range(offset, offset + limit - 1);
 
       if (error) throw error;
+      if (!messages || messages.length === 0) return { data: [], error: null };
 
-      return { data: data || [], error: null };
+      // Obtener nombres de usuarios (sin FK, consulta separada)
+      const usuarioIds = [...new Set(messages.map(m => m.usuario_id))];
+      const { data: usuarios } = await supabase
+        .from('usuario')
+        .select('id, nombre_completo')
+        .in('id', usuarioIds);
+
+      const usuarioMap = {};
+      (usuarios || []).forEach(u => { usuarioMap[u.id] = u.nombre_completo; });
+
+      const data = messages.map(msg => ({
+        ...msg,
+        usuario: { nombre: usuarioMap[msg.usuario_id] || null },
+      }));
+
+      return { data, error: null };
     } catch (error) {
       console.error('Error getting messages:', error);
       return { data: [], error };
