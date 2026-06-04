@@ -9,8 +9,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../../styles';
 import { roomsService } from '../../../services/rooms';
 import { reportsService } from '../../../services/reports';
+import { bansService } from '../../../services/bans';
 import { supabase } from '../../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
+import { useBan } from '../../../hooks/useBan';
 import ParticipantsScreen from '../ParticipantsScreen';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 import InAppNotification from '../../../components/ui/InAppNotification';
@@ -30,6 +32,7 @@ const RoomScreen = ({ route, navigation }) => {
   const [pendingReports, setPendingReports] = useState(0);
   const [modNotification, setModNotification] = useState({ visible: false, variant: 'warning', title: '', message: '' });
   const { user } = useAuth();
+  const { setBan } = useBan();
   const reportsChannelRef = useRef(null);
 
   let subscription = null;
@@ -95,7 +98,17 @@ const RoomScreen = ({ route, navigation }) => {
             title: 'Has sido expulsado',
             message: 'No puedes reingresar a esta sala.',
           });
-          setTimeout(() => navigation.goBack(), 3500);
+          
+          // Verificar si el usuario está baneado y redirigir
+          setTimeout(async () => {
+            const { isBanned, data: banData } = await bansService.checkUserBan(user.id);
+            if (isBanned) {
+              // Mostrar pantalla de baneo global
+              setBan(banData);
+            } else {
+              navigation.goBack();
+            }
+          }, 3500);
           return;
         }
 

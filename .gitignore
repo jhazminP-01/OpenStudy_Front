@@ -43,7 +43,7 @@ yarn-error.*
 /android
 
 # audio files (too large for git)
-assets/sounds/
+# assets/sounds/
 
 # sensitive config (supabase credentials)
 lib/

@@ -127,6 +127,10 @@ const ModerationPanel = ({ visible, onClose, salaId }) => {
     setConfirmExpel({ visible: false, report: null });
     if (!report) return;
 
+    console.log('Report completo:', report);
+    console.log('reportado_id:', report.reportado_id);
+    console.log('reportado:', report.reportado);
+
     setActionLoading(report.id);
     const { error } = await reportsService.expelUser(
       salaId,

@@ -10,11 +10,11 @@ import RoomScreen from '../screens/room/RoomScreen';
 import RoomDetailsScreen from '../screens/room/RoomDetailsScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
-// Screens
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import StatsScreen from '../screens/profile/StatsScreen';
 import SoundsScreen from '../screens/profile/SoundsScreen';
 import CreateRoomScreen from '../screens/CreateRoomScreen';
+import BannedScreen from '../screens/auth/BannedScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -58,65 +58,82 @@ const ProfileStack = () => (
   </Stack.Navigator>
 );
 
+const TabsStack = () => (
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      tabBarIcon: ({ color, focused }) => {
+        let iconName;
+        if (route.name === 'Rooms') {
+          iconName = focused ? 'grid' : 'grid-outline';
+        } else if (route.name === 'Profile') {
+          iconName = focused ? 'person' : 'person-outline';
+        }
+        return <Ionicons name={iconName} size={22} color={color} />;
+      },
+      tabBarActiveTintColor: COLORS.textWhite,
+      tabBarInactiveTintColor: 'rgba(255,255,255,0.6)',
+      headerShown: false,
+      tabBarStyle: styles.tabBar,
+      tabBarLabelStyle: styles.tabBarLabel,
+      tabBarItemStyle: ({ focused }) => [
+        styles.tabBarItem,
+        focused && styles.tabBarItemActive,
+      ],
+      tabBarBackground: () => (
+        <LinearGradient
+          colors={COLORS.gradientButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.tabBarBackground}
+        />
+      ),
+    })}
+  >
+    <Tab.Screen
+      name="Rooms"
+      component={RoomsStack}
+      options={({ route }) => ({
+        title: 'Salas',
+        tabBarStyle: ((route) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? 'RoomsList';
+          if (routeName === 'Room' || routeName === 'RoomSounds') {
+            return { display: 'none' };
+          }
+          return styles.tabBar;
+        })(route),
+      })}
+    />
+    <Tab.Screen
+      name="Profile"
+      component={ProfileStack}
+      options={{ title: 'Perfil' }}
+    />
+  </Tab.Navigator>
+);
+
 export const TabNavigator = () => {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, focused }) => {
-          let iconName;
-
-          if (route.name === 'Rooms') {
-            iconName = focused ? 'grid' : 'grid-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return <Ionicons name={iconName} size={22} color={color} />;
-        },
-
-        tabBarActiveTintColor: COLORS.textWhite,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.6)',
-        headerShown: false,
-
-        tabBarStyle: styles.tabBar,
-
-        tabBarLabelStyle: styles.tabBarLabel,
-
-        tabBarItemStyle: ({ focused }) => [
-          styles.tabBarItem,
-          focused && styles.tabBarItemActive,
-        ],
-
-        tabBarBackground: () => (
-          <LinearGradient
-            colors={COLORS.gradientButton}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.tabBarBackground}
-          />
-        ),
-      })}
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen
-        name="Rooms"
-        component={RoomsStack}
-        options={({ route }) => ({
-          title: 'Salas',
-          tabBarStyle: ((route) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'RoomsList';
-            if (routeName === 'Room' || routeName === 'RoomSounds') {
-              return { display: 'none' };
-            }
-            return styles.tabBar;
-          })(route),
-        })}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileStack}
-        options={{ title: 'Perfil' }}
-      />
-    </Tab.Navigator>
+      <Stack.Group>
+        <Stack.Screen 
+          name="MainTabs" 
+          component={TabsStack}
+        />
+      </Stack.Group>
+      
+      <Stack.Group
+        screenOptions={{
+          presentation: 'modal',
+        }}
+      >
+        <Stack.Screen
+          name="BannedModal"
+          component={BannedScreen}
+        />
+      </Stack.Group>
+    </Stack.Navigator>
   );
 };
 

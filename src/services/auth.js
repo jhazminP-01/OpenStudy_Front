@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { bansService } from './bans';
 
 export const authService = {
   // Iniciar sesión
@@ -7,7 +8,23 @@ export const authService = {
       email,
       password,
     });
-    return { data, error };
+
+    if (error) return { data, error };
+
+    // Verificar si el usuario está baneado
+    const { isBanned, data: banData } = await bansService.checkUserBan(data.user.id);
+
+    if (isBanned) {
+      return { 
+        data: null, 
+        error: { 
+          message: 'USER_BANNED',
+          banData: banData
+        } 
+      };
+    }
+
+    return { data, error: null };
   },
 
   // Registrar usuario

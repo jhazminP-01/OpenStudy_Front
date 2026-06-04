@@ -12,6 +12,7 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { authService } from '../../services/auth';
 import { Button, Input } from '../../components/ui';
 import { useAuthValidation } from '../../hooks/useAuthValidation';
+import { useBan } from '../../hooks/useBan';
 
 const LoginScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ const LoginScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { validateLogin } = useAuthValidation();
+  const { setBan } = useBan();
 
   const validateForm = () => {
     const newErrors = validateLogin(formData);
@@ -36,9 +38,11 @@ const LoginScreen = ({ navigation }) => {
       const { data, error } = await authService.login(formData.email, formData.password);
 
       if (error) {
-        Alert.alert('Error', error.message || 'Credenciales incorrectas');
-      } else {
-        Alert.alert('Éxito', 'Inicio de sesión correcto');
+        if (error.message === 'USER_BANNED') {
+          setBan(error.banData);
+        } else {
+          Alert.alert('Error', error.message || 'Credenciales incorrectas');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'No se pudo conectar al servidor');

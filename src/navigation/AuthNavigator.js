@@ -5,6 +5,7 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import TermsAndConditionsScreen from '../screens/auth/TermsAndConditionsScreen';
+import BannedScreen from '../screens/auth/BannedScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -63,6 +64,13 @@ export const AuthNavigator = () => {
             color: COLORS.textWhite,
             fontWeight: 'bold',
           },
+        }}
+      />
+      <Stack.Screen
+        name="Banned"
+        component={BannedScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

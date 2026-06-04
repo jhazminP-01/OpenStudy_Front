@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { bansService } from './bans';
 
 export const reportsService = {
   // 1. Crear reporte
@@ -115,15 +116,34 @@ export const reportsService = {
     return { data, error };
   },
 
-  // 6. Expulsar usuario
+  // 6. Expulsar usuario (con baneo automático)
   expelUser: async (salaId, reportadoId, reportId) => {
+    console.log('Expulsando usuario:', { salaId, reportadoId, reportId });
+
     const { error: expelError } = await supabase
       .from('participacion')
       .update({ esta_expulsado: true, estado_conexion: 'inactivo' })
       .eq('sala_id', salaId)
       .eq('usuario_id', reportadoId);
 
-    if (expelError) return { data: null, error: expelError };
+    if (expelError) {
+      console.error('Error al expulsar:', expelError);
+      return { data: null, error: expelError };
+    }
+
+    // Crear baneo automático
+    console.log('Creando baneo para usuario:', reportadoId);
+    const { data: banData, error: banError } = await bansService.createBan(
+      reportadoId,
+      salaId,
+      'Conductas inapropiadas'
+    );
+
+    if (banError) {
+      console.error('Error al crear baneo automático:', banError);
+    } else {
+      console.log('Baneo creado exitosamente:', banData);
+    }
 
     const { data, error } = await supabase
       .from('reporte')
