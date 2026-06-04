@@ -286,6 +286,12 @@ const RoomScreen = ({ route, navigation }) => {
     p => p.estado_conexion === 'activo' && !p.esta_expulsado
   ).length || 0;
 
+  // Obtener advertencias del usuario actual
+  const userParticipation = roomData.participacion?.find(
+    p => p.usuario_id === user?.id
+  );
+  const userWarnings = userParticipation?.advertencias || 0;
+
   const currentParticipation = roomData.participacion?.find(
     (p) => p.usuario_id === user?.id
   );
@@ -301,6 +307,7 @@ const RoomScreen = ({ route, navigation }) => {
         roomName={roomData?.nombre || 'Sala'}
         onLeave={handleLeaveRoom}
         leaving={leaving}
+        userWarnings={userWarnings}
       />
 
       {/* Tabs siempre montados para mantener useTimer activo entre tabs */}

@@ -41,7 +41,7 @@ export const timerService = {
         .from('pomodoro_estado')
         .select('*')
         .eq('sala_id', roomId)
-        .single();
+        .maybeSingle();
 
       if (timerError && timerError.code !== 'PGRST116') {
         throw timerError;
@@ -52,7 +52,7 @@ export const timerService = {
         .from('sala')
         .select('config_duracion_estudio, config_duracion_descanso, config_duracion_descanso_largo, config_ciclos_antes_largo')
         .eq('id', roomId)
-        .single();
+        .maybeSingle();
 
       // 4. Resolver duraciones (config > _siguiente > sala.config_* > defaults)
       // Si el timer está pausado/detenido, usar _siguiente para aplicar nueva config
@@ -97,7 +97,7 @@ export const timerService = {
           })
           .eq('sala_id', roomId)
           .select('*')
-          .single();
+          .maybeSingle();
 
         result = { data, error };
       } else {
@@ -121,7 +121,7 @@ export const timerService = {
             iniciado_en: now,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         result = { data, error };
       }
@@ -173,7 +173,7 @@ export const timerService = {
         .from('pomodoro_estado')
         .select('*')
         .eq('sala_id', roomId)
-        .single();
+        .maybeSingle();
 
       if (timerError || !currentTimer) {
         return { data: null, error: { message: 'No hay temporizador activo' } };
@@ -192,7 +192,7 @@ export const timerService = {
         })
         .eq('sala_id', roomId)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -246,7 +246,7 @@ export const timerService = {
         .eq('sala_id', roomId)
         .eq('estado', 'pausado')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -293,7 +293,7 @@ export const timerService = {
         .from('pomodoro_estado')
         .select('*')
         .eq('sala_id', roomId)
-        .single();
+        .maybeSingle();
 
       if (timerError || !currentTimer) {
         return { data: null, error: { message: 'No hay temporizador activo' } };
@@ -333,7 +333,7 @@ export const timerService = {
         .update(updatePayload)
         .eq('sala_id', roomId)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -415,7 +415,7 @@ export const timerService = {
         .from('pomodoro_estado')
         .select('id')
         .eq('sala_id', roomId)
-        .single();
+        .maybeSingle();
 
       let result;
       if (existingTimer) {
@@ -430,7 +430,7 @@ export const timerService = {
           })
           .eq('sala_id', roomId)
           .select('*')
-          .single();
+          .maybeSingle();
       } else {
         result = await supabase
           .from('pomodoro_estado')
@@ -442,7 +442,7 @@ export const timerService = {
             ciclos_antes_descanso_largo_siguiente: ciclosVal,
           })
           .select('*')
-          .single();
+          .maybeSingle();
       }
 
       if (result.error) throw result.error;
@@ -477,7 +477,7 @@ export const timerService = {
         .from('pomodoro_estado')
         .select('*')
         .eq('sala_id', roomId)
-        .single();
+        .maybeSingle();
 
       if (timerError || !currentTimer) {
         return { data: null, error: { message: 'No hay temporizador activo' } };
@@ -564,7 +564,7 @@ export const timerService = {
         .update(updatePayload)
         .eq('sala_id', roomId)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

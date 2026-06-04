@@ -62,7 +62,7 @@ export const roomsService = {
         codigo_invitacion: codigoInvitacion,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return { data: null, error };
@@ -74,7 +74,7 @@ export const roomsService = {
       .select('id')
       .eq('sala_id', data.id)
       .eq('usuario_id', userId)
-      .single();
+      .maybeSingle();
 
     if (!existingParticipation) {
       const { error: participationError } = await supabase
@@ -111,11 +111,12 @@ export const roomsService = {
           rol,
           estado_conexion,
           esta_expulsado,
-          fecha_ingreso
+          fecha_ingreso,
+          advertencias
         )
       `)
       .eq('id', roomId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       return { data, error };
@@ -150,7 +151,7 @@ export const roomsService = {
       .select('*')
       .eq('id', roomId)
       .eq('estado', 'activa')
-      .single();
+      .maybeSingle();
 
     if (roomError || !room) {
       return { data: null, error: { message: 'La sala no existe o no está activa' } };
@@ -221,7 +222,7 @@ export const roomsService = {
         esta_expulsado: false,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return { data: null, error };
@@ -265,7 +266,7 @@ export const roomsService = {
     // 1. Obtener participaciones activas de la sala (solo conectados)
     const { data: participaciones, error: participacionesError } = await supabase
       .from('participacion')
-      .select('id, usuario_id, rol, estado_conexion, esta_expulsado, fecha_ingreso')
+      .select('id, usuario_id, rol, estado_conexion, esta_expulsado, fecha_ingreso, advertencias')
       .eq('sala_id', roomId)
       .eq('estado_conexion', 'activo')
       .eq('esta_expulsado', false)

@@ -33,8 +33,7 @@ yarn-error.*
 # local env files
 .env*.local
 
-# lib folder with sensitive credentials
-lib/
+
 
 # typescript
 *.tsbuildinfo
@@ -45,3 +44,6 @@ lib/
 
 # audio files (too large for git)
 assets/sounds/
+
+# sensitive config (supabase credentials)
+lib/

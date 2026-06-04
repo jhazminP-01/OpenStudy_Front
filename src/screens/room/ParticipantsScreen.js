@@ -81,6 +81,17 @@ const ParticipantsScreen = ({ route }) => {
   const renderParticipant = ({ item }) => {
     const isModerator = item.rol === 'moderador';
     const isCurrentUser = item.usuario_id === user?.id;
+    const advertencias = item.advertencias || 0;
+
+    // Determinar color según cantidad de advertencias
+    const getWarningColor = (count) => {
+      if (count === 0) return null;
+      if (count === 1) return '#F59E0B'; // Amarillo/naranja
+      if (count === 2) return '#EA580C'; // Naranja fuerte
+      return '#DC2626'; // Rojo (3+)
+    };
+
+    const warningColor = getWarningColor(advertencias);
 
     return (
       <View style={styles.participantCard}>
@@ -107,6 +118,14 @@ const ParticipantsScreen = ({ route }) => {
               <View style={styles.roleBadge}>
                 <Ionicons name="shield-checkmark" size={12} color={COLORS.accent} />
                 <Text style={styles.roleBadgeText}>Moderador</Text>
+              </View>
+            )}
+            {advertencias > 0 && (
+              <View style={[styles.warningBadge, { backgroundColor: warningColor + '20', borderColor: warningColor }]}>
+                <Ionicons name="warning" size={10} color={warningColor} />
+                <Text style={[styles.warningBadgeText, { color: warningColor }]}>
+                  {advertencias}/3
+                </Text>
               </View>
             )}
           </View>
@@ -265,6 +284,22 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.small,
     color: COLORS.success,
     fontWeight: '600',
+    fontSize: 11,
+  },
+
+  warningBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+    borderWidth: 1,
+  },
+
+  warningBadgeText: {
+    ...TYPOGRAPHY.small,
+    fontWeight: '700',
     fontSize: 11,
   },
 

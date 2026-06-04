@@ -29,6 +29,24 @@ export default StyleSheet.create({
     elevation: 5,
   },
 
+  warningBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+    borderWidth: 1.5,
+    minWidth: 52,
+  },
+
+  warningText: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+
   headerButton: {
     width: 40,
     height: 40,
@@ -46,6 +64,7 @@ export default StyleSheet.create({
     color: COLORS.textWhite,
     flex: 1,
     textAlign: 'center',
+    marginHorizontal: SPACING.sm,
   },
 
   tabBar: {

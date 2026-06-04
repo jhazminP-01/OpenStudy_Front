@@ -27,7 +27,7 @@ export const messagesService = {
           },
         ])
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -97,7 +97,7 @@ export const messagesService = {
         .eq('id', messageId)
         .eq('usuario_id', userId)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

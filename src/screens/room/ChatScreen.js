@@ -64,7 +64,7 @@ const ChatScreen = ({ route }) => {
           .from('usuario')
           .select('id, nombre_completo')
           .eq('id', newRecord.usuario_id)
-          .single();
+          .maybeSingle();
         const msgWithUser = {
           ...newRecord,
           usuario: { nombre: userData?.nombre_completo || null },

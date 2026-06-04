@@ -17,7 +17,7 @@ export const reportsService = {
         es_automatico: false,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     return { data: result, error };
   },
@@ -48,7 +48,7 @@ export const reportsService = {
       .update(update)
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     return { data, error };
   },
@@ -91,7 +91,7 @@ export const reportsService = {
       .update({ estado: 'revisado', accion_tomada: accion })
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     return { data, error, autoExpulsado };
   },
@@ -110,7 +110,7 @@ export const reportsService = {
       .update({ estado: 'revisado', accion_tomada: 'mensaje_eliminado' })
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     return { data, error };
   },
@@ -130,7 +130,7 @@ export const reportsService = {
       .update({ estado: 'revisado', accion_tomada: 'expulsion' })
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     return { data, error };
   },

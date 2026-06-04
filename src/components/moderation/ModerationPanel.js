@@ -108,6 +108,20 @@ const ModerationPanel = ({ visible, onClose, salaId }) => {
     setConfirmExpel({ visible: true, report });
   };
 
+  const handleIgnore = async (report) => {
+    setActionLoading(report.id);
+    const { error } = await reportsService.updateReportStatus(report.id, 'revisado', 'ignorado');
+    setActionLoading(null);
+
+    if (error) {
+      showToast('error', 'Error', 'No se pudo ignorar el reporte.');
+      return;
+    }
+
+    showToast('success', 'Reporte ignorado', 'El reporte fue marcado como revisado sin acciones.');
+    removeReport(report.id);
+  };
+
   const confirmExpelUser = async () => {
     const report = confirmExpel.report;
     setConfirmExpel({ visible: false, report: null });
@@ -213,32 +227,46 @@ const ModerationPanel = ({ visible, onClose, salaId }) => {
             <ActivityIndicator color={COLORS.primary} size="small" />
           </View>
         ) : (
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.actionWarn]}
-              onPress={() => handleWarn(report)}
-            >
-              <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
-              <Text style={styles.actionWarnText}>Advertir</Text>
-            </TouchableOpacity>
-
-            {isMessage && report.mensaje_id && (
+          <View style={styles.actionsContainer}>
+            {/* Fila 1: Ignorar y Advertir */}
+            <View style={styles.actionsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.actionDelete]}
-                onPress={() => handleDeleteMessage(report)}
+                style={[styles.actionButton, styles.actionButtonHalf, styles.actionIgnore]}
+                onPress={() => handleIgnore(report)}
               >
-                <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-                <Text style={styles.actionDeleteText}>Eliminar</Text>
+                <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.textRoomsTertiary} />
+                <Text style={styles.actionIgnoreText}>Ignorar</Text>
               </TouchableOpacity>
-            )}
 
-            <TouchableOpacity
-              style={[styles.actionButton, styles.actionExpel]}
-              onPress={() => handleExpel(report)}
-            >
-              <Ionicons name="ban-outline" size={16} color="#FF6B6B" />
-              <Text style={styles.actionExpelText}>Expulsar</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.actionButtonHalf, styles.actionWarn]}
+                onPress={() => handleWarn(report)}
+              >
+                <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
+                <Text style={styles.actionWarnText}>Advertir</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Fila 2: Eliminar (si aplica) y Expulsar */}
+            <View style={styles.actionsRow}>
+              {isMessage && report.mensaje_id && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.actionButtonHalf, styles.actionDelete]}
+                  onPress={() => handleDeleteMessage(report)}
+                >
+                  <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                  <Text style={styles.actionDeleteText}>Eliminar msg</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={[styles.actionButton, isMessage && report.mensaje_id ? styles.actionButtonHalf : styles.actionButtonFull, styles.actionExpel]}
+                onPress={() => handleExpel(report)}
+              >
+                <Ionicons name="ban-outline" size={16} color="#FF6B6B" />
+                <Text style={styles.actionExpelText}>Expulsar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -460,19 +488,28 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
     fontWeight: '500',
   },
+  actionsContainer: {
+    gap: 8,
+    marginTop: 4,
+  },
   actionsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 4,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  actionButtonHalf: {
+    flex: 1,
+  },
+  actionButtonFull: {
+    flex: 1,
   },
   actionWarn: {
     borderColor: 'rgba(245, 158, 11, 0.3)',
@@ -500,6 +537,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#FF6B6B',
+  },
+  actionIgnore: {
+    borderColor: 'rgba(148, 163, 184, 0.3)',
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+  },
+  actionIgnoreText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textRoomsTertiary,
   },
 });
 

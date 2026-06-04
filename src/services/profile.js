@@ -69,7 +69,7 @@ export const profileService = {
           .from('configuracion_usuario')
           .insert({ usuario_id: userId, ...DEFAULT_CONFIG })
           .select()
-          .single();
+          .maybeSingle();
         return { data: inserted || DEFAULT_CONFIG, error: insertError };
       }
 
