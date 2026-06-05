@@ -4,11 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ImageBackground
+  ImageBackground,
+  Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
-import { IconBox, Button } from '../../components/ui';
+import { Button } from '../../components/ui';
 
 const WelcomeScreen = ({ navigation }) => {
   return (
@@ -20,7 +21,11 @@ const WelcomeScreen = ({ navigation }) => {
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <IconBox icon="📚" size={80} />
+          <Image 
+            source={require('../../../assets/inicio.jpeg')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>OpenStudy</Text>
@@ -56,6 +61,11 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginBottom: SPACING.rooms.marginBottomLarge,
+  },
+  logoImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 50,
   },
   title: {
     ...TYPOGRAPHY.rooms.title,
