@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView
 } from 'react-native';
@@ -14,6 +13,7 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { authService } from '../../services/auth';
 
 import { Button, Input, Checkbox } from '../../components/ui';
+import AppModal from '../../components/ui/ErrorModal';
 import { useAuthValidation } from '../../hooks/useAuthValidation';
 
 const RegisterScreen = ({ navigation }) => {
@@ -26,6 +26,7 @@ const RegisterScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, title: '', message: '' });
   const { validateRegister } = useAuthValidation();
 
   const validateForm = () => {
@@ -44,16 +45,39 @@ const RegisterScreen = ({ navigation }) => {
       });
 
       if (error) {
-        if (error.message.includes('already registered')) {
+        let errorMessage = error.message;
+        
+        // Traducir errores de Supabase al español
+        if (error.message.includes('already registered') || error.message.includes('User already exists')) {
           setErrors({ email: 'El correo electrónico ya está registrado' });
-        } else {
-          Alert.alert('Error', error.message || 'Error al registrar usuario');
+          return;
+        } else if (error.message.includes('Password should be at least')) {
+          errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'El correo electrónico no es válido';
         }
+        
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error al registrar',
+          message: errorMessage || 'Error al registrar usuario'
+        });
       } else {
-        Alert.alert('Éxito', 'Usuario registrado correctamente. Revisa tu correo para confirmar.');
+        setErrorModal({
+          visible: true,
+          type: 'success',
+          title: 'Registro exitoso',
+          message: 'Usuario registrado correctamente. Revisa tu correo para confirmar.'
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo conectar al servidor');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error de conexión',
+        message: 'No se pudo conectar al servidor'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -156,6 +180,14 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'info', title: '', message: '' })}
+      />
     </LinearGradient>
   );
 };

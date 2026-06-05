@@ -9,7 +9,18 @@ export const authService = {
       password,
     });
 
-    if (error) return { data, error };
+    if (error) {
+      // Traducir errores de Supabase al español
+      let errorMessage = error.message;
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Correo o contraseña incorrectos';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Por favor confirma tu correo electrónico';
+      } else if (error.message.includes('User not found')) {
+        errorMessage = 'Usuario no encontrado';
+      }
+      return { data, error: { ...error, message: errorMessage } };
+    }
 
     // Verificar si el usuario está baneado
     const { isBanned, data: banData } = await bansService.checkUserBan(data.user.id);

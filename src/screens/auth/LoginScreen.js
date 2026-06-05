@@ -5,12 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { authService } from '../../services/auth';
 import { Button, Input } from '../../components/ui';
+import AppModal from '../../components/ui/ErrorModal';
 import { useAuthValidation } from '../../hooks/useAuthValidation';
 import { useBan } from '../../hooks/useBan';
 
@@ -21,6 +21,7 @@ const LoginScreen = ({ navigation }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, title: '', message: '' });
   const { validateLogin } = useAuthValidation();
   const { setBan } = useBan();
 
@@ -41,11 +42,21 @@ const LoginScreen = ({ navigation }) => {
         if (error.message === 'USER_BANNED') {
           setBan(error.banData);
         } else {
-          Alert.alert('Error', error.message || 'Credenciales incorrectas');
+          setErrorModal({
+            visible: true,
+            type: 'error',
+            title: 'Error de inicio de sesión',
+            message: error.message || 'Credenciales incorrectas'
+          });
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo conectar al servidor');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error de conexión',
+        message: 'No se pudo conectar al servidor'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +119,14 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'info', title: '', message: '' })}
+      />
     </LinearGradient>
   );
 };
