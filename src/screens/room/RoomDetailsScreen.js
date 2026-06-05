@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 import { Ionicons } from '@expo/vector-icons';
 import { roomsService } from '../../services/rooms';
 import { useAuth } from '../../hooks/useAuth';
+import AppModal from '../../components/ui/ErrorModal';
 
 const RoomDetailsScreen = ({ route, navigation }) => {
   const { roomId } = route.params;
@@ -12,6 +13,7 @@ const RoomDetailsScreen = ({ route, navigation }) => {
   const [roomDetails, setRoomDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
 
   const loadRoomDetails = useCallback(async () => {
     try {
@@ -20,7 +22,12 @@ const RoomDetailsScreen = ({ route, navigation }) => {
       
       if (error) {
         console.error('Error loading room details:', error);
-        Alert.alert('Error', 'No se pudo cargar la información de la sala');
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: 'No se pudo cargar la información de la sala'
+        });
         navigation.goBack();
         return;
       }
@@ -28,7 +35,12 @@ const RoomDetailsScreen = ({ route, navigation }) => {
       setRoomDetails(data);
     } catch (error) {
       console.error('Error loading room details:', error);
-      Alert.alert('Error', 'Ocurrió un error al cargar la sala');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Ocurrió un error al cargar la sala'
+      });
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -41,7 +53,12 @@ const RoomDetailsScreen = ({ route, navigation }) => {
 
   const handleJoinRoom = async () => {
     if (!user?.id) {
-      Alert.alert('Error', 'Debes iniciar sesión para unirte a una sala');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Debes iniciar sesión para unirte a una sala'
+      });
       return;
     }
 
@@ -52,7 +69,12 @@ const RoomDetailsScreen = ({ route, navigation }) => {
       if (error.message === 'Ya estás en esta sala') {
         navigation.navigate('Room', { roomId });
       } else {
-        Alert.alert('Error', error.message);
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: error.message
+        });
       }
     } else {
       navigation.navigate('Room', { roomId });
@@ -181,6 +203,14 @@ const RoomDetailsScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+    <AppModal
+      visible={errorModal.visible}
+      type={errorModal.type}
+      title={errorModal.title}
+      message={errorModal.message}
+      onClose={() => setErrorModal({ visible: false, type: 'error', title: '', message: '' })}
+    />
     </LinearGradient>
   );
 };

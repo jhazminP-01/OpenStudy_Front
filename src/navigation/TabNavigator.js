@@ -8,6 +8,7 @@ import RoomsListScreen from '../screens/RoomsListScreen';
 import RoomCreatedScreen from '../screens/RoomCreatedScreen';
 import RoomScreen from '../screens/room/RoomScreen';
 import RoomDetailsScreen from '../screens/room/RoomDetailsScreen';
+import JoinByCodeScreen from '../screens/JoinByCodeScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import ProfileScreen from '../screens/profile/ProfileScreen';
@@ -33,6 +34,10 @@ const RoomsStack = () => (
     <Stack.Screen 
       name="RoomCreated" 
       component={RoomCreatedScreen}
+    />
+    <Stack.Screen 
+      name="JoinByCode" 
+      component={JoinByCodeScreen}
     />
     <Stack.Screen 
       name="Room" 

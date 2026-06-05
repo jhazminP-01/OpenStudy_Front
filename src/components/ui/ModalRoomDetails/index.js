@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../../styles';
@@ -17,6 +16,7 @@ import { supabase } from '../../../../lib/supabase';
 import { timerService } from '../../../services/timer';
 import { RoomInfoSection, ParticipantsAvatars, JoinButton } from './components';
 import TimerSection from './components/TimerSection';
+import AppModal from '../ErrorModal';
 import styles from './ModalRoomDetails.styles';
 
 const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
@@ -26,6 +26,7 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
   const [joining, setJoining] = useState(false);
   const [timerData, setTimerData] = useState(undefined);
   const [timerTimeLeft, setTimerTimeLeft] = useState(0);
+  const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
   const timerChannelRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
@@ -35,10 +36,15 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
     try {
       setLoading(true);
       const { data, error } = await roomsService.getRoomDetails(roomId);
-      
+
       if (error) {
         console.error('Error loading room details:', error);
-        Alert.alert('Error', 'No se pudo cargar la información de la sala');
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: 'No se pudo cargar la información de la sala'
+        });
         onClose();
         return;
       }
@@ -54,7 +60,12 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
       setTimerTimeLeft(timerService.calculateTimeLeft(timer));
     } catch (error) {
       console.error('Error loading room details:', error);
-      Alert.alert('Error', 'Ocurrió un error al cargar la sala');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Ocurrió un error al cargar la sala'
+      });
       onClose();
     } finally {
       setLoading(false);
@@ -109,7 +120,12 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
 
   const handleJoinRoom = async () => {
     if (!user?.id) {
-      Alert.alert('Error', 'Debes iniciar sesión para unirte a una sala');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Debes iniciar sesión para unirte a una sala'
+      });
       return;
     }
 
@@ -121,7 +137,12 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
         onClose();
         navigation?.navigate('Room', { roomId });
       } else {
-        Alert.alert('Error', error.message);
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: error.message
+        });
       }
     } else {
       onClose();
@@ -213,6 +234,14 @@ const ModalRoomDetails = ({ visible, roomId, onClose, navigation }) => {
           </LinearGradient>
         </View>
       </View>
+
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'error', title: '', message: '' })}
+      />
     </Modal>
   );
 };

@@ -36,6 +36,37 @@ export const roomsService = {
       return { data, error };
   },
 
+  // Obtener salas inactivas
+  getInactiveRooms: async (filters = {}) => {
+      let query = supabase
+        .from('sala')
+        .select(`
+          *,
+          materia (
+            id,
+            nombre
+          ),
+          participacion (
+            id,
+            usuario_id,
+            rol,
+            estado_conexion,
+            esta_expulsado,
+            fecha_ingreso
+          )
+        `)
+        .eq('estado', 'inactiva')
+        .order('created_at', { ascending: false });
+
+      if (filters.materia_id) {
+        query = query.eq('materia_id', filters.materia_id);
+      }
+
+      const { data, error } = await query;
+
+      return { data, error };
+  },
+
   // Obtener materias
   getMaterias: async () => {
     const { data, error } = await supabase
@@ -231,6 +262,93 @@ export const roomsService = {
     return { data: room, error: null };
   },
 
+  // Unirse a una sala usando código de invitación
+  joinRoomByCode: async (codigo, userId) => {
+    // 1. Buscar sala por código de invitación
+    const { data: room, error: roomError } = await supabase
+      .from('sala')
+      .select('*')
+      .eq('codigo_invitacion', codigo)
+      .eq('estado', 'activa')
+      .maybeSingle();
+
+    if (roomError || !room) {
+      return { data: null, error: { message: 'Código inválido o sala no está activa' } };
+    }
+
+    // 2. Verificar si el usuario tiene un registro (activo o inactivo)
+    const { data: existingParticipations, error: checkError } = await supabase
+      .from('participacion')
+      .select('*')
+      .eq('sala_id', room.id)
+      .eq('usuario_id', userId)
+      .eq('esta_expulsado', false)
+      .limit(1);
+
+    const existingParticipation = existingParticipations && existingParticipations.length > 0 ? existingParticipations[0] : null;
+
+    if (existingParticipation) {
+      // Si ya está activo, permitir "tomar control" de la sesión
+      if (existingParticipation.estado_conexion === 'activo') {
+        const { error: updateError } = await supabase
+          .from('participacion')
+          .update({ fecha_ingreso: new Date().toISOString() })
+          .eq('id', existingParticipation.id);
+
+        if (updateError) {
+          return { data: null, error: updateError };
+        }
+
+        return { data: room, error: null };
+      }
+
+      // Si está inactivo, reactivar
+      const { error: reactivateError } = await supabase
+        .from('participacion')
+        .update({ estado_conexion: 'activo' })
+        .eq('id', existingParticipation.id);
+
+      if (reactivateError) {
+        return { data: null, error: reactivateError };
+      }
+
+      return { data: room, error: null };
+    }
+
+    // 3. Verificar capacidad máxima
+    const { data: participants, error: countError } = await supabase
+      .from('participacion')
+      .select('id')
+      .eq('sala_id', room.id)
+      .eq('estado_conexion', 'activo')
+      .eq('esta_expulsado', false);
+
+    const currentParticipants = participants?.length || 0;
+
+    if (currentParticipants >= room.capacidad_maxima) {
+      return { data: null, error: { message: 'La sala está llena' } };
+    }
+
+    // 4. Crear nueva participación
+    const { data, error } = await supabase
+      .from('participacion')
+      .insert({
+        usuario_id: userId,
+        sala_id: room.id,
+        rol: 'participante',
+        estado_conexion: 'activo',
+        esta_expulsado: false,
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: room, error: null };
+  },
+
   // Salir de una sala
   leaveRoom: async (roomId, userId) => {
     // 1. Verificar que el usuario está en la sala
@@ -253,6 +371,76 @@ export const roomsService = {
       .from('participacion')
       .update({ estado_conexion: 'inactivo' })
       .eq('id', participation.id);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    // 3. Verificar si hay participantes activos restantes
+    const { data: activeParticipants, error: countError } = await supabase
+      .from('participacion')
+      .select('id')
+      .eq('sala_id', roomId)
+      .eq('estado_conexion', 'activo')
+      .eq('esta_expulsado', false);
+
+    const hasActiveParticipants = activeParticipants && activeParticipants.length > 0;
+
+    // 4. Si no hay participantes activos, marcar la sala como inactiva
+    if (!hasActiveParticipants) {
+      await supabase
+        .from('sala')
+        .update({ estado: 'inactiva' })
+        .eq('id', roomId);
+    }
+
+    return { data: { success: true }, error: null };
+  },
+
+  // Cerrar sala (solo moderador)
+  closeRoom: async (roomId, userId) => {
+    // 1. Verificar que el usuario es moderador de la sala
+    const { data: participation, error: checkError } = await supabase
+      .from('participacion')
+      .select('rol')
+      .eq('sala_id', roomId)
+      .eq('usuario_id', userId)
+      .maybeSingle();
+
+    if (!participation || participation.rol !== 'moderador') {
+      return { data: null, error: { message: 'Solo el moderador puede cerrar la sala' } };
+    }
+
+    // 2. Desconectar a todos los participantes activos
+    const { error: disconnectError } = await supabase
+      .from('participacion')
+      .update({ estado_conexion: 'inactivo' })
+      .eq('sala_id', roomId)
+      .eq('estado_conexion', 'activo');
+
+    if (disconnectError) {
+      return { data: null, error: disconnectError };
+    }
+
+    // 3. Cambiar estado de la sala a inactiva
+    const { error } = await supabase
+      .from('sala')
+      .update({ estado: 'inactiva' })
+      .eq('id', roomId);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: { success: true }, error: null };
+  },
+
+  // Actualizar estado de la sala
+  updateRoomStatus: async (roomId, newStatus) => {
+    const { error } = await supabase
+      .from('sala')
+      .update({ estado: newStatus })
+      .eq('id', roomId);
 
     if (error) {
       return { data: null, error };

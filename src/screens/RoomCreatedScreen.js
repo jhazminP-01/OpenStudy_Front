@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions, Clipboard } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,25 @@ export default function RoomCreatedScreen({ navigation, route }) {
   const materiaNombre = route.params?.materiaNombre || 'Materia';
   const { width } = useWindowDimensions();
   const isSmallMobile = width < 390;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = async () => {
+    await Clipboard.setString(sala?.codigo_invitacion || '');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Cuando vuelves de la sala, desaparece esta pantalla automáticamente
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // Si vuelves atrás desde la sala, pop automáticamente
+      if (e.data.action.type === 'GO_BACK') {
+        navigation.reset({ index: 0, routes: [{ name: 'RoomsList' }] });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   return (
   <LinearGradient
@@ -67,7 +86,12 @@ export default function RoomCreatedScreen({ navigation, route }) {
             <Ionicons name="key-outline" size={16} color={COLORS.iconCode} />
             <Text style={styles.label}>Código</Text>
           </View>
-          <Text style={styles.value}>{sala?.codigo_invitacion || '------'}</Text>
+          <View style={styles.codeRow}>
+            <Text style={styles.value}>{sala?.codigo_invitacion || '------'}</Text>
+            <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
+              <Ionicons name={copied ? "checkmark" : "copy-outline"} size={18} color={copied ? COLORS.buttonGreen : COLORS.textRoomsTertiary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -83,13 +107,6 @@ export default function RoomCreatedScreen({ navigation, route }) {
         >
           <Text style={styles.primaryText}>Ir a la sala</Text>
         </LinearGradient>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'RoomsList' }] })}
-      >
-        <Text style={styles.secondaryText}>Volver al inicio</Text>
       </TouchableOpacity>
 
       <View style={{ height: 110 }} />
@@ -185,6 +202,16 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
   },
 
+  codeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  copyButton: {
+    padding: 4,
+  },
+
   badge: {
     backgroundColor: COLORS.buttonPurple,
     paddingHorizontal: 12,
@@ -218,20 +245,5 @@ const styles = StyleSheet.create({
     color: COLORS.textWhite,
     ...TYPOGRAPHY.body,
     fontWeight: '800',
-  },
-
-  secondaryButton: {
-    borderRadius: 18,
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.secondaryButtonBorder,
-    backgroundColor: COLORS.backgroundRoomsLight,
-  },
-
-  secondaryText: {
-    color: COLORS.textRoomsTertiary,
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
   },
 });

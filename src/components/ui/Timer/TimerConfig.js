@@ -6,11 +6,11 @@ import {
   StyleSheet,
   Modal,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../styles';
+import AppModal from '../ErrorModal';
 
 const TimerConfig = ({
   visible, onClose, onSave,
@@ -24,6 +24,7 @@ const TimerConfig = ({
   const [descansoLargo, setDescansoLargo] = useState(String(currentDescansoLargo));
   const [ciclosAntesLargo, setCiclosAntesLargo] = useState(String(currentCiclosAntesLargo));
   const [saving, setSaving] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
 
   useEffect(() => {
     if (visible) {
@@ -45,19 +46,39 @@ const TimerConfig = ({
     const dl = parseInt(descansoLargo);
     const cl = parseInt(ciclosAntesLargo);
     if (isNaN(e) || e < 5 || e > 60) {
-      Alert.alert('Error', 'Estudio: entre 5 y 60 minutos');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Estudio: entre 5 y 60 minutos'
+      });
       return;
     }
     if (isNaN(d) || d < 1 || d > 60) {
-      Alert.alert('Error', 'Descanso: entre 1 y 60 minutos');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Descanso: entre 1 y 60 minutos'
+      });
       return;
     }
     if (isNaN(dl) || dl < 5 || dl > 60) {
-      Alert.alert('Error', 'Descanso largo: entre 5 y 60 minutos');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Descanso largo: entre 5 y 60 minutos'
+      });
       return;
     }
     if (isNaN(cl) || cl < 1 || cl > 8) {
-      Alert.alert('Error', 'Ciclos antes del descanso largo: entre 1 y 8');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Ciclos antes del descanso largo: entre 1 y 8'
+      });
       return;
     }
     try {
@@ -65,7 +86,12 @@ const TimerConfig = ({
       await onSave({ estudio: e, descanso: d, descansoLargo: dl, ciclosAntesLargo: cl });
       onClose();
     } catch (err) {
-      Alert.alert('Error', err.message || 'No se pudo guardar la configuración');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'No se pudo guardar la configuración'
+      });
     } finally {
       setSaving(false);
     }
@@ -218,6 +244,14 @@ const TimerConfig = ({
           </View>
         </View>
       </View>
+
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'error', title: '', message: '' })}
+      />
     </Modal>
   );
 };

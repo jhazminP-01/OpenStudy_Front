@@ -22,6 +22,9 @@ const ConfirmModal = ({
   loading = false,
   icon = 'help-circle',
   iconColor = COLORS.textWhite,
+  secondaryText = null,
+  onSecondary = null,
+  secondaryColor = COLORS.error,
 }) => {
   return (
     <Modal
@@ -46,7 +49,7 @@ const ConfirmModal = ({
           </View>
 
           {/* Botones */}
-          <View style={styles.buttons}>
+          <View style={[styles.buttons, secondaryText && styles.buttonsThree]}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
               onPress={onCancel}
@@ -54,6 +57,16 @@ const ConfirmModal = ({
             >
               <Text style={styles.cancelButtonText}>{cancelText}</Text>
             </TouchableOpacity>
+
+            {secondaryText && (
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton]}
+                onPress={onSecondary}
+                disabled={loading}
+              >
+                <Text style={[styles.secondaryButtonText, { color: secondaryColor }]}>{secondaryText}</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.confirmButton}
@@ -146,13 +159,17 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
 
+  buttonsThree: {
+    flexWrap: 'wrap',
+  },
+
   button: {
     flex: 1,
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 140,
+    minWidth: 100,
   },
 
   cancelButton: {
@@ -164,6 +181,18 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     ...TYPOGRAPHY.body,
     color: COLORS.textRoomsTertiary,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+
+  secondaryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+
+  secondaryButtonText: {
+    ...TYPOGRAPHY.body,
     fontWeight: '600',
     fontSize: 16,
   },

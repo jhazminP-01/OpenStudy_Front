@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../../styles';
@@ -17,6 +16,7 @@ import ParticipantsScreen from '../ParticipantsScreen';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 import InAppNotification from '../../../components/ui/InAppNotification';
 import ModerationPanel from '../../../components/moderation/ModerationPanel';
+import AppModal from '../../../components/ui/ErrorModal';
 import { RoomHeader, RoomTabBar, RoomInfoTab, ChatTab } from './components';
 import { ambientSoundControl } from '../../../utils/ambientSoundControl';
 import styles from './RoomScreen.styles';
@@ -26,16 +26,20 @@ const RoomScreen = ({ route, navigation }) => {
   const [roomData, setRoomData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [leaving, setLeaving] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [activeTab, setActiveTab] = useState('room'); // 'room', 'chat', 'participants'
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showModerationPanel, setShowModerationPanel] = useState(false);
   const [pendingReports, setPendingReports] = useState(0);
   const [modNotification, setModNotification] = useState({ visible: false, variant: 'warning', title: '', message: '' });
+  const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
+  const [toast, setToast] = useState({ visible: false, message: '', variant: 'success' });
   const { user } = useAuth();
   const { setBan } = useBan();
   const reportsChannelRef = useRef(null);
 
   let subscription = null;
+  let roomChannelRef = useRef(null);
 
   // Navegar a sonidos cuando se selecciona el tab - DEBE estar antes de returns condicionales
   useEffect(() => {
@@ -54,7 +58,7 @@ const RoomScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     loadRoomDetails();
-    setupRealtimeSubscription();
+    roomChannelRef.current = setupRealtimeSubscription();
 
     return () => {
       // Salir de la sala automáticamente al desmontar (navegación normal)
@@ -64,6 +68,11 @@ const RoomScreen = ({ route, navigation }) => {
 
       if (subscription) {
         supabase.removeChannel(subscription);
+      }
+
+      if (roomChannelRef.current) {
+        supabase.removeChannel(roomChannelRef.current);
+        roomChannelRef.current = null;
       }
 
       if (reportsChannelRef.current) {
@@ -190,6 +199,31 @@ const RoomScreen = ({ route, navigation }) => {
         updateParticipantsLocally(payload);
       })
       .subscribe();
+
+    // Escuchar cambios en el estado de la sala (cierre)
+    const roomChannel = supabase
+      .channel(`sala:id=eq.${roomId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'sala',
+        filter: `id=eq.${roomId}`
+      }, (payload) => {
+        if (payload.new.estado === 'inactiva' && roomData?.estado === 'activa') {
+          setModNotification({
+            visible: true,
+            variant: 'error',
+            title: 'Sala cerrada',
+            message: 'El moderador ha cerrado la sala.',
+          });
+          setTimeout(() => {
+            navigation.goBack();
+          }, 2000);
+        }
+      })
+      .subscribe();
+
+    return roomChannel;
   };
 
   const updateParticipantsLocally = (payload) => {
@@ -230,7 +264,12 @@ const RoomScreen = ({ route, navigation }) => {
       const { data, error } = await roomsService.getRoomDetails(roomId);
 
       if (error) {
-        Alert.alert('Error', 'No se pudo cargar la sala');
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: 'No se pudo cargar la sala'
+        });
         navigation.goBack();
         return;
       }
@@ -260,6 +299,32 @@ const RoomScreen = ({ route, navigation }) => {
     if (error) {
       setLeaving(false);
       setShowLeaveModal(false);
+    } else {
+      setToast({ visible: true, message: 'Saliste de la sala', variant: 'success' });
+      setTimeout(() => {
+        navigation.goBack();
+      }, 500);
+    }
+  };
+
+  const confirmCloseRoom = async () => {
+    if (!user?.id) {
+      setShowLeaveModal(false);
+      return;
+    }
+
+    setClosing(true);
+    const { data, error } = await roomsService.closeRoom(roomId, user.id);
+
+    if (error) {
+      setClosing(false);
+      setShowLeaveModal(false);
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: error.message || 'No se pudo cerrar la sala'
+      });
     } else {
       navigation.goBack();
     }
@@ -354,9 +419,12 @@ const RoomScreen = ({ route, navigation }) => {
         cancelText="Cancelar"
         onConfirm={confirmLeaveRoom}
         onCancel={cancelLeaveRoom}
-        loading={leaving}
+        loading={leaving || closing}
         icon="exit-outline"
         iconColor={COLORS.error}
+        secondaryText={isModerator ? "Cerrar sala" : null}
+        onSecondary={isModerator ? confirmCloseRoom : null}
+        secondaryColor={COLORS.error}
       />
 
       <ModerationPanel
@@ -378,6 +446,14 @@ const RoomScreen = ({ route, navigation }) => {
         message={modNotification.message}
         duration={modNotification.variant === 'error' ? 3500 : 5000}
         onDismiss={() => setModNotification((prev) => ({ ...prev, visible: false }))}
+      />
+
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'error', title: '', message: '' })}
       />
     </LinearGradient>
   );

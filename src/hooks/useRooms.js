@@ -67,6 +67,27 @@ export const useRooms = () => {
     try {
       const { error } = await roomsService.leaveRoom(roomId, userId);
       if (error) throw error;
+      // Recargar salas para reflejar cambios de estado
+      await loadRooms();
+      return { success: true, error: null };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cerrar sala (solo moderador)
+  const closeRoom = async (roomId, userId) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await roomsService.closeRoom(roomId, userId);
+      if (error) throw error;
+      // Recargar salas para reflejar cambios de estado
+      await loadRooms();
       return { success: true, error: null };
     } catch (err) {
       setError(err.message);
@@ -89,5 +110,6 @@ export const useRooms = () => {
     createRoom,
     joinRoom,
     leaveRoom,
+    closeRoom,
   };
 };

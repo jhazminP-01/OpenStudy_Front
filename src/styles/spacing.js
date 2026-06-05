@@ -32,7 +32,7 @@ export const SPACING = {
   
   // Espaciados específicos de rooms
   rooms: {
-    paddingX: 16,
+    paddingX: 20,
     paddingTop: 22,
     paddingBottom: 12,
     marginBottomSmall: 6,

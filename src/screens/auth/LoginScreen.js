@@ -50,6 +50,7 @@ const LoginScreen = ({ navigation }) => {
           });
         }
       }
+      // Login exitoso: navegación automática, sin modal
     } catch (error) {
       setErrorModal({
         visible: true,

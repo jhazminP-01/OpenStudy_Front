@@ -4,6 +4,7 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../../styles';
 export default StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: SPACING.rooms.paddingX,
   },
 
   screenCenter: {
@@ -24,19 +25,23 @@ export default StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: SPACING.rooms.marginBottomLarge,
     gap: SPACING.rooms.gapMedium,
+    paddingBottom: SPACING.rooms.marginBottomLarge,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderRoomsLight,
   },
 
   headerTextBox: {
     flex: 1,
+    justifyContent: 'center',
   },
 
   title: {
     ...TYPOGRAPHY.rooms.title,
     color: COLORS.textWhite,
-    marginBottom: SPACING.rooms.marginBottomSmall,
+    marginBottom: 0,
     flexShrink: 1,
   },
 
@@ -70,12 +75,13 @@ export default StyleSheet.create({
 
   searchInput: {
     backgroundColor: COLORS.backgroundRoomsLight,
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 15,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    height: 44,
     color: COLORS.textWhite,
     ...TYPOGRAPHY.body,
-    marginBottom: SPACING.rooms.marginBottomMedium,
+    marginBottom: 0,
     borderWidth: 1,
     borderColor: COLORS.borderRoomsLight,
   },
@@ -100,6 +106,22 @@ export default StyleSheet.create({
   },
 
   filterChipText: {
+    color: COLORS.textWhite,
+    ...TYPOGRAPHY.body,
+    fontWeight: '600',
+  },
+
+  advancedFilterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: SPACING.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderRoomsLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  advancedFilterButtonText: {
     color: COLORS.textWhite,
     ...TYPOGRAPHY.body,
     fontWeight: '600',
@@ -182,6 +204,26 @@ export default StyleSheet.create({
 
   iconLanguage: {
     backgroundColor: COLORS.iconLanguageBg,
+  },
+
+  iconChemistry: {
+    backgroundColor: 'rgba(245,158,11,0.15)',
+  },
+
+  iconHistory: {
+    backgroundColor: 'rgba(146,64,14,0.15)',
+  },
+
+  iconBiology: {
+    backgroundColor: 'rgba(16,185,129,0.15)',
+  },
+
+  iconEconomics: {
+    backgroundColor: 'rgba(251,191,36,0.15)',
+  },
+
+  iconDatabase: {
+    backgroundColor: 'rgba(139,92,246,0.15)',
   },
 
   iconDefault: {
@@ -294,6 +336,22 @@ export default StyleSheet.create({
     backgroundColor: COLORS.buttonPink,
   },
 
+  buttonOrange: {
+    backgroundColor: COLORS.subjects.quimica,
+  },
+
+  buttonBrown: {
+    backgroundColor: COLORS.subjects.historia,
+  },
+
+  buttonYellow: {
+    backgroundColor: COLORS.subjects.economia,
+  },
+
+  buttonGray: {
+    backgroundColor: COLORS.subjects.otros,
+  },
+
   enterButtonText: {
     color: COLORS.textWhite,
     ...TYPOGRAPHY.body,
@@ -316,6 +374,26 @@ export default StyleSheet.create({
   },
 
   createRoomButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.shadowRooms,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+
+  joinByCodeButtonWrapper: {
+    position: 'absolute',
+    right: 20,
+    bottom: 170,
+    zIndex: 100,
+  },
+
+  joinByCodeButton: {
     width: 60,
     height: 60,
     borderRadius: 30,

@@ -6,7 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   useWindowDimensions,
-  Alert,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../styles';
@@ -15,7 +15,9 @@ import { supabase } from '../../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import ModalRoomDetails from '../../components/ui/ModalRoomDetails';
+import AppModal from '../../components/ui/ErrorModal';
 import { RoomCard, FilterChips, SearchBar, SectionHeader } from './components';
+import AdvancedFilters from '../../components/ui/AdvancedFilters';
 import styles from './RoomsListScreen.styles';
 
 export default function RoomsListScreen({ navigation, route }) {
@@ -28,6 +30,13 @@ export default function RoomsListScreen({ navigation, route }) {
   const [joiningRoomId, setJoiningRoomId] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    estado: [],
+    capacidad: [],
+    ordenar: 'default',
+  });
   const { user } = useAuth();
 
   // Al llegar a la lista de salas, limpiar cualquier sesión activa stale
@@ -89,6 +98,7 @@ export default function RoomsListScreen({ navigation, route }) {
   }, []);
 
   let subscription = null;
+  let roomStatusSubscription = null;
 
   const setupRealtimeSubscription = () => {
     subscription = supabase
@@ -101,6 +111,52 @@ export default function RoomsListScreen({ navigation, route }) {
         updateRoomParticipantCount(payload);
       })
       .subscribe();
+
+    // Escuchar cambios en el estado de las salas y nuevas salas
+    roomStatusSubscription = supabase
+      .channel('sala:estado')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'sala'
+      }, (payload) => {
+        handleNewRoom(payload);
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'sala'
+      }, (payload) => {
+        handleRoomStatusChange(payload);
+      })
+      .subscribe();
+  };
+
+  const handleRoomStatusChange = (payload) => {
+    const { id, estado } = payload.new;
+    
+    // Si una sala cambió a inactiva, removerla de la lista
+    if (estado === 'inactiva') {
+      setRooms(prevRooms => prevRooms.filter(room => room.id !== id));
+    }
+    // Si una sala cambió a activa, recargar la lista
+    else if (estado === 'activa') {
+      loadData();
+    }
+  };
+
+  const handleNewRoom = async (payload) => {
+    const newRoom = payload.new;
+    
+    // Solo agregar si está activa
+    if (newRoom.estado === 'activa') {
+      // Obtener datos completos de la sala (con materia y participación)
+      const { data, error } = await roomsService.getRoomDetails(newRoom.id);
+      
+      if (!error && data) {
+        setRooms(prevRooms => [data, ...prevRooms]);
+      }
+    }
   };
 
   const updateRoomParticipantCount = (payload) => {
@@ -157,6 +213,9 @@ export default function RoomsListScreen({ navigation, route }) {
       if (subscription) {
         supabase.removeChannel(subscription);
       }
+      if (roomStatusSubscription) {
+        supabase.removeChannel(roomStatusSubscription);
+      }
     };
   }, [loadData]);
 
@@ -167,16 +226,57 @@ export default function RoomsListScreen({ navigation, route }) {
     }
   }, [route?.params?.refresh, loadData, navigation]);
 
-  const filteredRooms = rooms.filter((room) => {
-    const matchSearch = room.nombre
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+  const filteredRooms = (rooms || [])
+    .filter((room) => {
+      const matchSearch = room.nombre
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
 
-    const matchMateria =
-      !selectedMateria || room.materia_id === selectedMateria;
+      const matchMateria =
+        !selectedMateria || room.materia_id === selectedMateria;
 
-    return matchSearch && matchMateria;
-  });
+      // Filtro por estado
+      const matchEstado =
+        advancedFilters.estado.length === 0 ||
+        advancedFilters.estado.includes(room.estado);
+
+      // Filtro por capacidad
+      const participantsCount = room.participacion?.filter(
+        p => p.estado_conexion === 'activo' && !p.esta_expulsado
+      ).length || 0;
+      const isFull = participantsCount >= room.capacidad_maxima;
+
+      let matchCapacidad = true;
+      if (advancedFilters.capacidad.length > 0) {
+        if (advancedFilters.capacidad.includes('conEspacio') && isFull) {
+          matchCapacidad = false;
+        }
+        if (advancedFilters.capacidad.includes('llenas') && !isFull) {
+          matchCapacidad = false;
+        }
+      }
+
+      return matchSearch && matchMateria && matchEstado && matchCapacidad;
+    })
+    .sort((a, b) => {
+      const aParticipants = a.participacion?.filter(
+        p => p.estado_conexion === 'activo' && !p.esta_expulsado
+      ).length || 0;
+      const bParticipants = b.participacion?.filter(
+        p => p.estado_conexion === 'activo' && !p.esta_expulsado
+      ).length || 0;
+
+      switch (advancedFilters.ordenar) {
+        case 'participantes':
+          return bParticipants - aParticipants;
+        case 'menosParticipantes':
+          return aParticipants - bParticipants;
+        case 'recientes':
+          return new Date(b.fecha_creacion) - new Date(a.fecha_creacion);
+        default:
+          return 0;
+      }
+    });
 
   const handleViewDetails = (roomId) => {
     setSelectedRoomId(roomId);
@@ -190,7 +290,12 @@ export default function RoomsListScreen({ navigation, route }) {
 
   const handleJoinRoom = async (roomId) => {
     if (!user?.id) {
-      Alert.alert('Error', 'Debes iniciar sesión para unirte a una sala');
+      setErrorModal({
+        visible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Debes iniciar sesión para unirte a una sala'
+      });
       return;
     }
 
@@ -201,7 +306,12 @@ export default function RoomsListScreen({ navigation, route }) {
       if (error.message === 'Ya estás en esta sala') {
         navigation.navigate('Room', { roomId });
       } else {
-        Alert.alert('Error', error.message);
+        setErrorModal({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: error.message
+        });
       }
     } else {
       navigation.navigate('Room', { roomId });
@@ -226,9 +336,9 @@ export default function RoomsListScreen({ navigation, route }) {
   };
 
   const getCardTheme = (materiaNombre) => {
-    const name = (materiaNombre || '').toLowerCase();
+    const name = (materiaNombre || '').toLowerCase().trim();
 
-    if (name.includes('program')) {
+    if (name === 'programación' || name === 'programacion') {
       return {
         icon: 'code-slash-outline',
         iconBoxStyle: styles.iconProgramming,
@@ -237,7 +347,7 @@ export default function RoomsListScreen({ navigation, route }) {
       };
     }
 
-    if (name.includes('mat')) {
+    if (name === 'matemáticas' || name === 'matematicas') {
       return {
         icon: 'calculator-outline',
         iconBoxStyle: styles.iconMath,
@@ -246,7 +356,7 @@ export default function RoomsListScreen({ navigation, route }) {
       };
     }
 
-    if (name.includes('fis')) {
+    if (name === 'física' || name === 'fisica') {
       return {
         icon: 'planet-outline',
         iconBoxStyle: styles.iconPhysics,
@@ -255,11 +365,7 @@ export default function RoomsListScreen({ navigation, route }) {
       };
     }
 
-    if (
-      name.includes('idioma') ||
-      name.includes('inglés') ||
-      name.includes('ingles')
-    ) {
+    if (name === 'inglés' || name === 'ingles' || name === 'idioma') {
       return {
         icon: 'chatbubble-ellipses-outline',
         iconBoxStyle: styles.iconLanguage,
@@ -268,11 +374,65 @@ export default function RoomsListScreen({ navigation, route }) {
       };
     }
 
+    if (name === 'química' || name === 'quimica') {
+      return {
+        icon: 'flask-outline',
+        iconBoxStyle: styles.iconChemistry,
+        buttonStyle: styles.buttonOrange,
+        color: COLORS.subjects.quimica,
+      };
+    }
+
+    if (name === 'historia') {
+      return {
+        icon: 'book-outline',
+        iconBoxStyle: styles.iconHistory,
+        buttonStyle: styles.buttonBrown,
+        color: COLORS.subjects.historia,
+      };
+    }
+
+    if (name === 'biología' || name === 'biologia') {
+      return {
+        icon: 'leaf-outline',
+        iconBoxStyle: styles.iconBiology,
+        buttonStyle: styles.buttonGreen,
+        color: COLORS.subjects.biologia,
+      };
+    }
+
+    if (name === 'economía' || name === 'economia') {
+      return {
+        icon: 'trending-up-outline',
+        iconBoxStyle: styles.iconEconomics,
+        buttonStyle: styles.buttonYellow,
+        color: COLORS.subjects.economia,
+      };
+    }
+
+    if (name === 'base de datos' || name === 'base de datos') {
+      return {
+        icon: 'server-outline',
+        iconBoxStyle: styles.iconDatabase,
+        buttonStyle: styles.buttonPurple,
+        color: COLORS.subjects.baseDatos,
+      };
+    }
+
+    if (name === 'otros') {
+      return {
+        icon: 'sparkles-outline',
+        iconBoxStyle: styles.iconDefault,
+        buttonStyle: styles.buttonGray,
+        color: COLORS.subjects.otros,
+      };
+    }
+
     return {
       icon: 'sparkles-outline',
       iconBoxStyle: styles.iconDefault,
-      buttonStyle: styles.buttonPurple,
-      color: COLORS.subjects.baseDatos,
+      buttonStyle: styles.buttonGray,
+      color: COLORS.subjects.otros,
     };
   };
 
@@ -319,27 +479,30 @@ export default function RoomsListScreen({ navigation, route }) {
               <View style={styles.header}>
                 <View style={styles.headerTextBox}>
                   <Text style={styles.title}>Salas de Estudio</Text>
-                  <Text style={styles.subtitle}>
-                    Encuentra tu espacio para aprender y colaborar
-                  </Text>
                 </View>
-
-                <TouchableOpacity style={styles.notificationButton}>
-                  <Ionicons name="notifications" size={22} color={COLORS.iconCode} />
-                  <View style={styles.notificationDot} />
-                </TouchableOpacity>
               </View>
 
-              <SearchBar
-                value={search}
-                onChangeText={setSearch}
-              />
+              <View style={{ flexDirection: 'row', gap: SPACING.md, alignItems: 'center', marginBottom: SPACING.rooms.marginBottomMedium, width: '100%' }}>
+                <View style={{ flex: 1 }}>
+                  <SearchBar
+                    value={search}
+                    onChangeText={setSearch}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.advancedFilterButton}
+                  onPress={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                >
+                  <Ionicons name="funnel" size={20} color={COLORS.textWhite} />
+                </TouchableOpacity>
+              </View>
 
               <FilterChips
                 materias={materias}
                 selectedMateria={selectedMateria}
                 onSelectMateria={setSelectedMateria}
               />
+
 
               <SectionHeader count={filteredRooms.length} />
 
@@ -381,6 +544,21 @@ export default function RoomsListScreen({ navigation, route }) {
         </LinearGradient>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.joinByCodeButtonWrapper}
+        onPress={() => navigation.navigate('JoinByCode')}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#FACC15', '#EAB308']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.joinByCodeButton}
+        >
+          <Ionicons name="key-outline" size={28} color={COLORS.textWhite} />
+        </LinearGradient>
+      </TouchableOpacity>
+
       {/* Modal de detalles */}
       <ModalRoomDetails
         visible={modalVisible}
@@ -388,6 +566,47 @@ export default function RoomsListScreen({ navigation, route }) {
         onClose={handleCloseModal}
         navigation={navigation}
       />
+
+      {/* Modal de error */}
+      <AppModal
+        visible={errorModal.visible}
+        type={errorModal.type}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ visible: false, type: 'error', title: '', message: '' })}
+      />
+
+      {/* Modal de Filtros Avanzados */}
+      <Modal
+        visible={showAdvancedFilters}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setShowAdvancedFilters(false)}
+      >
+        <LinearGradient
+          colors={COLORS.gradientRooms}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ flex: 1, paddingTop: 60, paddingHorizontal: SPACING.md }}
+        >
+          <AdvancedFilters
+            visible={showAdvancedFilters}
+            onToggle={() => setShowAdvancedFilters(false)}
+            onApply={(filters) => {
+              setAdvancedFilters(filters);
+              setShowAdvancedFilters(false);
+            }}
+            onClear={() => {
+              setAdvancedFilters({
+                estado: [],
+                capacidad: [],
+                ordenar: 'default',
+              });
+            }}
+            filters={advancedFilters}
+          />
+        </LinearGradient>
+      </Modal>
     </LinearGradient>
   );
 }

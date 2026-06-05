@@ -121,7 +121,7 @@ export const COLORS = {
     ingles: '#F472B6',        // Rosa
     quimica: '#F59E0B',       // Naranja
     baseDatos: '#8B5CF6',     // Púrpura
-    historia: '#EC4899',      // Rosa oscuro
+    historia: '#92400E',      // Café
     biologia: '#10B981',      // Verde esmeralda
     economia: '#FBBF24',      // Amarillo dorado
     otros: '#6B7280',         // Gris
