@@ -22,9 +22,6 @@ const ProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState({ nombre_completo: '', email: '' });
   const [stats, setStats] = useState({ sesiones: 0, horas: 0, salas: 0 });
   const [config, setConfig] = useState({
-    notificaciones: true,
-    modo_oscuro: false,
-    sonidos_timer: true,
     sonido_enfoque: 'campana',
     sonido_descanso: 'chime',
   });
@@ -46,12 +43,6 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleToggle = async (key, value) => {
-    const updated = { ...config, [key]: value };
-    setConfig(updated);
-    await profileService.updateConfig(user.id, updated);
-  };
 
   const handleLogout = async () => {
     try {
@@ -133,86 +124,18 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.sectionLabel}>CONFIGURACIÓN</Text>
 
         <View style={styles.configCard}>
-          {/* Notificaciones */}
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleLeft}>
-              <Ionicons name="notifications-outline" size={20} color={COLORS.primaryLight} />
-              <Text style={styles.toggleLabel}>Notificaciones</Text>
-            </View>
-            <Switch
-              value={config.notificaciones}
-              onValueChange={(v) => handleToggle('notificaciones', v)}
-              trackColor={{ false: COLORS.borderRoomsMedium, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
-            />
-          </View>
-
-          <View style={styles.toggleDivider} />
-
-          {/* Modo Oscuro */}
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleLeft}>
-              <Ionicons name="moon-outline" size={20} color={COLORS.primaryLight} />
-              <Text style={styles.toggleLabel}>Modo Oscuro</Text>
-            </View>
-            <Switch
-              value={config.modo_oscuro}
-              onValueChange={(v) => handleToggle('modo_oscuro', v)}
-              trackColor={{ false: COLORS.borderRoomsMedium, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
-            />
-          </View>
-
-          <View style={styles.toggleDivider} />
-
           {/* Sonidos Timer */}
-          <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={styles.toggleRow}
+            onPress={() => navigation.navigate('Sounds')}
+            activeOpacity={0.7}
+          >
             <View style={styles.toggleLeft}>
               <Ionicons name="volume-high-outline" size={20} color={COLORS.primaryLight} />
               <Text style={styles.toggleLabel}>Sonidos del temporizador</Text>
             </View>
-            <Switch
-              value={config.sonidos_timer}
-              onValueChange={(v) => handleToggle('sonidos_timer', v)}
-              trackColor={{ false: COLORS.borderRoomsMedium, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
-            />
-          </View>
-
-          {/* Subcards de sonidos */}
-          {config.sonidos_timer && (
-            <View style={styles.soundSubCards}>
-              <TouchableOpacity
-                style={styles.soundRow}
-                onPress={() => navigation.navigate('Sounds')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.soundLabel}>Sonido de enfoque</Text>
-                <View style={styles.soundRight}>
-                  <Text style={styles.soundActive}>Activo</Text>
-                  <Text style={styles.soundConfig}>Configurar &gt;</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.soundDivider} />
-
-              <TouchableOpacity
-                style={styles.soundRow}
-                onPress={() => navigation.navigate('Sounds')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.soundLabel}>Sonido de descanso</Text>
-                <View style={styles.soundRight}>
-                  <Text style={styles.soundActive}>Activo</Text>
-                  <Text style={styles.soundConfig}>Configurar &gt;</Text>
-                </View>
-              </TouchableOpacity>
-
-              <Text style={styles.soundNote}>
-                Al desactivar los sonidos del temporizador se evitarán ambos sonidos.
-              </Text>
-            </View>
-          )}
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textRoomsTertiary} />
+          </TouchableOpacity>
         </View>
 
         {/* Cerrar Sesión */}

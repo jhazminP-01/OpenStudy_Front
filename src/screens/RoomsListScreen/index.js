@@ -33,7 +33,7 @@ export default function RoomsListScreen({ navigation, route }) {
   const [errorModal, setErrorModal] = useState({ visible: false, type: 'error', title: '', message: '' });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
-    estado: [],
+    fase: [],
     capacidad: [],
     ordenar: 'default',
   });
@@ -99,6 +99,7 @@ export default function RoomsListScreen({ navigation, route }) {
 
   let subscription = null;
   let roomStatusSubscription = null;
+  let timerSubscription = null;
 
   const setupRealtimeSubscription = () => {
     subscription = supabase
@@ -130,11 +131,23 @@ export default function RoomsListScreen({ navigation, route }) {
         handleRoomStatusChange(payload);
       })
       .subscribe();
+
+    // Escuchar cambios en el timer de las salas (fase, estado)
+    timerSubscription = supabase
+      .channel('pomodoro_estado:rooms')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'pomodoro_estado'
+      }, (payload) => {
+        handleTimerChange(payload);
+      })
+      .subscribe();
   };
 
   const handleRoomStatusChange = (payload) => {
     const { id, estado } = payload.new;
-    
+
     // Si una sala cambió a inactiva, removerla de la lista
     if (estado === 'inactiva') {
       setRooms(prevRooms => prevRooms.filter(room => room.id !== id));
@@ -143,6 +156,25 @@ export default function RoomsListScreen({ navigation, route }) {
     else if (estado === 'activa') {
       loadData();
     }
+  };
+
+  const handleTimerChange = (payload) => {
+    const { sala_id, fase, estado } = payload.new || payload.old;
+
+    setRooms(prevRooms => {
+      return prevRooms.map(room => {
+        if (room.id === sala_id) {
+          return {
+            ...room,
+            pomodoro_estado: {
+              fase,
+              estado,
+            },
+          };
+        }
+        return room;
+      });
+    });
   };
 
   const handleNewRoom = async (payload) => {
@@ -216,6 +248,9 @@ export default function RoomsListScreen({ navigation, route }) {
       if (roomStatusSubscription) {
         supabase.removeChannel(roomStatusSubscription);
       }
+      if (timerSubscription) {
+        supabase.removeChannel(timerSubscription);
+      }
     };
   }, [loadData]);
 
@@ -235,10 +270,10 @@ export default function RoomsListScreen({ navigation, route }) {
       const matchMateria =
         !selectedMateria || room.materia_id === selectedMateria;
 
-      // Filtro por estado
-      const matchEstado =
-        advancedFilters.estado.length === 0 ||
-        advancedFilters.estado.includes(room.estado);
+      // Filtro por fase del timer
+      const matchFase =
+        advancedFilters.fase.length === 0 ||
+        advancedFilters.fase.includes(room.pomodoro_estado?.fase);
 
       // Filtro por capacidad
       const participantsCount = room.participacion?.filter(
@@ -256,7 +291,7 @@ export default function RoomsListScreen({ navigation, route }) {
         }
       }
 
-      return matchSearch && matchMateria && matchEstado && matchCapacidad;
+      return matchSearch && matchMateria && matchFase && matchCapacidad;
     })
     .sort((a, b) => {
       const aParticipants = a.participacion?.filter(
@@ -444,6 +479,7 @@ export default function RoomsListScreen({ navigation, route }) {
     const theme = getCardTheme(item.materia?.nombre);
     const isJoining = joiningRoomId === item.id;
     const isFull = participantsCount >= item.capacidad_maxima;
+    const timerPhase = item.pomodoro_estado?.fase;
 
     return (
       <RoomCard
@@ -453,6 +489,7 @@ export default function RoomsListScreen({ navigation, route }) {
         theme={theme}
         isJoining={isJoining}
         isFull={isFull}
+        timerPhase={timerPhase}
         onViewDetails={() => handleViewDetails(item.id)}
         onJoin={() => handleJoinRoom(item.id)}
       />

@@ -1,9 +1,6 @@
 import { supabase } from '../../lib/supabase';
 
 const DEFAULT_CONFIG = {
-  notificaciones: true,
-  modo_oscuro: false,
-  sonidos_timer: true,
   sonido_enfoque: 'campana',
   sonido_descanso: 'chime',
 };

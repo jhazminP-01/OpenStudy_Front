@@ -38,6 +38,26 @@ export const authService = {
     return { data, error: null };
   },
 
+  // Solicitar código OTP para recuperar contraseña
+  resetPasswordRequest: async (email) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    return { data, error };
+  },
+
+  // Verificar OTP y establecer nueva contraseña
+  resetPasswordConfirm: async (email, token, newPassword) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'recovery',
+    });
+    if (error) return { data, error };
+    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { data: updateData, error: updateError };
+  },
+
   // Registrar usuario
   register: async (email, password, metadata = {}) => {
     const { data, error } = await supabase.auth.signUp({

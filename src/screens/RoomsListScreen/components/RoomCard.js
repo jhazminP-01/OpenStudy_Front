@@ -4,6 +4,35 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../styles';
 import styles from '../RoomsListScreen.styles';
 
+const getTimerPhaseStyle = (phase) => {
+  switch (phase) {
+    case 'estudio':
+      return {
+        label: 'Enfoque',
+        containerStyle: { backgroundColor: COLORS.primary },
+        textStyle: { color: COLORS.textWhite },
+      };
+    case 'descanso':
+      return {
+        label: 'Descanso',
+        containerStyle: { backgroundColor: COLORS.statusPaused },
+        textStyle: { color: COLORS.textWhite },
+      };
+    case 'descanso_largo':
+      return {
+        label: 'Descanso Largo',
+        containerStyle: { backgroundColor: COLORS.warning },
+        textStyle: { color: COLORS.textWhite },
+      };
+    default:
+      return {
+        label: 'No iniciado',
+        containerStyle: { backgroundColor: COLORS.textRoomsTertiary },
+        textStyle: { color: COLORS.textWhite },
+      };
+  }
+};
+
 const RoomCard = ({
   room,
   participantsCount,
@@ -13,6 +42,7 @@ const RoomCard = ({
   isFull,
   onViewDetails,
   onJoin,
+  timerPhase,
 }) => {
   return (
     <TouchableOpacity 
@@ -35,9 +65,9 @@ const RoomCard = ({
               {room.materia?.nombre?.toUpperCase() || 'MATERIA'}
             </Text>
 
-            <View style={[styles.statusBadge, statusInfo.containerStyle]}>
-              <Text style={[styles.statusText, statusInfo.textStyle]}>
-                {statusInfo.label}
+            <View style={[styles.statusBadge, getTimerPhaseStyle(timerPhase).containerStyle]}>
+              <Text style={[styles.statusText, getTimerPhaseStyle(timerPhase).textStyle]}>
+                {getTimerPhaseStyle(timerPhase).label}
               </Text>
             </View>
           </View>

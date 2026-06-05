@@ -15,7 +15,7 @@ const AdvancedFilters = ({
   onApply,
   onClear,
   filters = {
-    estado: [],
+    fase: [],
     capacidad: [],
     ordenar: 'default',
   },
@@ -42,7 +42,7 @@ const AdvancedFilters = ({
 
   const handleClear = () => {
     setLocalFilters({
-      estado: [],
+      fase: [],
       capacidad: [],
       ordenar: 'default',
     });
@@ -61,26 +61,26 @@ const AdvancedFilters = ({
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Filtro por Estado */}
+        {/* Filtro por Fase del Timer */}
         <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Estado de la Sala</Text>
+          <Text style={styles.sectionTitle}>Fase del Timer</Text>
           <FilterCheckbox
-            label="Activa"
-            value="activa"
-            checked={localFilters.estado?.includes('activa')}
-            onToggle={() => toggleFilter('estado', 'activa')}
+            label="Enfoque"
+            value="estudio"
+            checked={localFilters.fase?.includes('estudio')}
+            onToggle={() => toggleFilter('fase', 'estudio')}
           />
           <FilterCheckbox
-            label="Pausada"
-            value="pausada"
-            checked={localFilters.estado?.includes('pausada')}
-            onToggle={() => toggleFilter('estado', 'pausada')}
+            label="Descanso"
+            value="descanso"
+            checked={localFilters.fase?.includes('descanso')}
+            onToggle={() => toggleFilter('fase', 'descanso')}
           />
           <FilterCheckbox
-            label="Inactiva"
-            value="inactiva"
-            checked={localFilters.estado?.includes('inactiva')}
-            onToggle={() => toggleFilter('estado', 'inactiva')}
+            label="Descanso Largo"
+            value="descanso_largo"
+            checked={localFilters.fase?.includes('descanso_largo')}
+            onToggle={() => toggleFilter('fase', 'descanso_largo')}
           />
         </View>
 

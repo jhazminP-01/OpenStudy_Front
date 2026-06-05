@@ -22,6 +22,10 @@ export const roomsService = {
             estado_conexion,
             esta_expulsado,
             fecha_ingreso
+          ),
+          pomodoro_estado (
+            fase,
+            estado
           )
         `)
         .eq('estado', 'activa')

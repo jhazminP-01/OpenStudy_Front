@@ -40,6 +40,12 @@ const RoomScreen = ({ route, navigation }) => {
 
   let subscription = null;
   let roomChannelRef = useRef(null);
+  const navigationEventRef = useRef(null);
+
+  const handleLeaveRoom = () => {
+    if (leaving) return;
+    setShowLeaveModal(true);
+  };
 
   // Navegar a sonidos cuando se selecciona el tab - DEBE estar antes de returns condicionales
   useEffect(() => {
@@ -48,6 +54,27 @@ const RoomScreen = ({ route, navigation }) => {
       setActiveTab('room');
     }
   }, [activeTab, navigation]);
+
+  // Handler para botón de atrás - mostrar modal de confirmación
+  useEffect(() => {
+    const backHandler = navigation.addListener('beforeRemove', (e) => {
+      if (leaving) {
+        // Si ya está saliendo, permitir la navegación
+        return;
+      }
+
+      // Prevenir la navegación por defecto
+      e.preventDefault();
+
+      // Guardar el evento de navegación para ejecutarlo después
+      navigationEventRef.current = e.data.action;
+
+      // Mostrar modal de confirmación
+      handleLeaveRoom();
+    });
+
+    return () => backHandler();
+  }, [navigation, leaving, handleLeaveRoom]);
 
   // Pausar sonido al ir a sonidos (SoundsScreen maneja el resume al volver)
   useEffect(() => {
@@ -282,11 +309,6 @@ const RoomScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleLeaveRoom = () => {
-    if (leaving) return;
-    setShowLeaveModal(true);
-  };
-
   const confirmLeaveRoom = async () => {
     if (!user?.id) {
       setShowLeaveModal(false);
@@ -302,7 +324,12 @@ const RoomScreen = ({ route, navigation }) => {
     } else {
       setToast({ visible: true, message: 'Saliste de la sala', variant: 'success' });
       setTimeout(() => {
-        navigation.goBack();
+        // Ejecutar la navegación original (botón atrás) o goBack si no hay evento guardado
+        if (navigationEventRef.current) {
+          navigation.dispatch(navigationEventRef.current);
+        } else {
+          navigation.goBack();
+        }
       }, 500);
     }
   };
@@ -332,6 +359,7 @@ const RoomScreen = ({ route, navigation }) => {
 
   const cancelLeaveRoom = () => {
     setShowLeaveModal(false);
+    navigationEventRef.current = null;
   };
 
   if (loading) {

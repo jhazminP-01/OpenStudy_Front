@@ -111,6 +111,15 @@ const LoginScreen = ({ navigation }) => {
           />
 
           <TouchableOpacity
+            style={{ alignItems: 'center', marginTop: 12 }}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={{ color: COLORS.primary, ...TYPOGRAPHY.body }}>
+              ¿Olvidaste tu contraseña?
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.linkButton}
             onPress={() => navigation.navigate('Register')}
           >
