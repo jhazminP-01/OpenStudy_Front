@@ -31,7 +31,8 @@ const TimerControls = ({
   const isActive = status === 'activo';
   const isPaused = status === 'pausado';
 
-  if (!isModerator) return null;
+  // Si no es moderador y el timer no está pausado, no mostrar controles
+  if (!isModerator && !isPaused) return null;
 
   return (
     <View style={styles.container}>
@@ -65,8 +66,8 @@ const TimerControls = ({
         )}
       </TouchableOpacity>
 
-      {/* Botón reiniciar */}
-      {!isStopped && (
+      {/* Botón reiniciar (solo moderador) */}
+      {!isStopped && isModerator && (
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={() => handleAction('reset', onReset)}

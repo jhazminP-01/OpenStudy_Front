@@ -220,7 +220,7 @@ export const timerService = {
    */
   resumeTimer: async (roomId, userId) => {
     try {
-      // Verificar rol moderador
+      // Verificar que el usuario está en la sala (cualquier participante puede reanudar si está pausado)
       const { data: participation, error: participationError } = await supabase
         .from('participacion')
         .select('rol')
@@ -230,8 +230,8 @@ export const timerService = {
         .eq('esta_expulsado', false)
         .maybeSingle();
 
-      if (participationError || !participation || participation.rol !== 'moderador') {
-        return { data: null, error: { message: 'Solo el moderador puede reanudar el temporizador' } };
+      if (participationError || !participation) {
+        return { data: null, error: { message: 'No estás en esta sala' } };
       }
 
       const now = new Date().toISOString();
@@ -465,12 +465,26 @@ export const timerService = {
 
   /**
    * Completar un ciclo y transicionar a la siguiente fase
-   * Solo debe llamarlo el moderador cuando el timer llega a 0
+   * Cualquier participante puede llamarlo cuando el timer llega a 0
    * @param {number} roomId - ID de la sala
-   * @param {string} userId - ID del usuario moderador
+   * @param {string} userId - ID del usuario
    */
   completeCycle: async (roomId, userId, { force = false } = {}) => {
     try {
+      // Verificar que el usuario está en la sala
+      const { data: participation, error: participationError } = await supabase
+        .from('participacion')
+        .select('rol')
+        .eq('sala_id', roomId)
+        .eq('usuario_id', userId)
+        .eq('estado_conexion', 'activo')
+        .eq('esta_expulsado', false)
+        .maybeSingle();
+
+      if (participationError || !participation) {
+        return { data: null, error: { message: 'No estás en esta sala' } };
+      }
+
       const now = new Date().toISOString();
 
       const { data: currentTimer, error: timerError } = await supabase
