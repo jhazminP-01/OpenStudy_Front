@@ -39,13 +39,12 @@ src/
 ├── services/        # Servicios y conexión con datos
 ├── styles/          # Colores, tipografía y estilos globales
 └── utils/           # Funciones auxiliares y validaciones
+
 ## Instalación y ejecución
 
 Para instalar y ejecutar el proyecto OpenStudy se deben seguir los siguientes pasos:
 
 1. Descargar o clonar el repositorio.
-
-```bash
 git clone <URL_DEL_REPOSITORIO>
 Ingresar a la carpeta del proyecto.
 cd OpenStudy_Front
