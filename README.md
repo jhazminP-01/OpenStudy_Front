@@ -1,75 +1,52 @@
-# OpenStudy_Front
+# OpenStudy - Aplicación de Estudio Colaborativo
 
-Frontend de la aplicación OpenStudy desarrollada con React Native y Expo.
+## Descripción
 
-## Estado Actual del Proyecto
+Aplicación móvil desarrollada con React Native y Expo que permite crear salas de estudio colaborativo con temporizador Pomodoro grupal, chat en tiempo real y gestión de participantes.
 
-### **Funcionalidades Implementadas** 
-- **Autenticación completa** con Supabase (Login, Register, Logout)
-- **Navegación estructurada** y automática
-- **Gestión de estado** con hooks personalizados
-- **Arquitectura escalable** y modular
+## Tecnologías
 
-### **Próximas Funcionalidades** (Listas para desarrollar)
-- Salas de estudio colaborativo
-- Temporizador Pomodoro grupal
-- Chat en tiempo real
-- Estadísticas de estudio
+- **React Native** (v0.81.5) - Framework móvil
+- **Expo** (v54.0.34) - Plataforma de desarrollo
+- **Supabase** (v2.103.0) - Backend y autenticación
+- **React Navigation** (v7.2.2) - Navegación
 
----
+## Instalación
 
-## Configuración
-
-### 1. Instalar dependencias
 ```bash
 npm install
-```
-
-### 2. Configurar Supabase
-1. Copia el archivo de configuración:
-```bash
 cp lib.example/supabase.example.js lib/supabase.js
+# Configura las credenciales de Supabase en lib/supabase.js
 ```
 
-2. Ve a tu dashboard de Supabase
-3. Settings -> API -> copia Project URL y anon public key
-4. Reemplaza los valores en `lib/supabase.js`
+## Ejecución
 
-### 3. Ejecutar la app
 ```bash
 npm start
 ```
 
----
+Escanea el código QR con Expo Go en tu dispositivo móvil.
 
-## Estructura del Proyecto
+## Dependencias
 
+Todas las dependencias están especificadas en `package.json`. Ver archivo para versiones exactas.
+
+## Configuración Necesaria
+
+**Supabase:**
+1. Copia `lib.example/supabase.example.js` a `lib/supabase.js`
+2. Reemplaza `SUPABASE_URL` y `SUPABASE_ANON_KEY` con tus credenciales
+3. ⚠️ No subas `lib/supabase.js` a Git (está en .gitignore)
+
+## Aplicación Compilada
+
+**APK Android:** Disponible en https://expo.dev/artifacts/eas/bgzKTjDTP6kbgGjjBEbDiB.apk
+
+Para generar nuevo build:
+```bash
+eas build --platform android
 ```
-src/
-components/     # Componentes UI reutilizables
-screens/        # Pantallas completas
-navigation/     # Configuración de rutas
-services/       # Lógica de negocio (Supabase)
-hooks/          # Custom hooks
-utils/          # Funciones utilitarias
-styles/         # Estilos globales
-assets/         # Recursos estáticos
-```
 
----
+## Autor(es)
 
-## Notas importantes
-- **Nunca subas `lib/supabase.js` a git** - contiene credenciales privadas
-- La carpeta `lib/` está en `.gitignore` por seguridad
-- Cada desarrollador debe tener su propio archivo de configuración
-- **El proyecto está listo para escalar** y construir las 15 historias de usuario
-
----
-
-## Tecnologías
-- **React Native** con **Expo**
-- **Supabase** para backend y autenticación
-- **React Navigation** para navegación
-- **Expo Linear Gradient** para diseños
-
-El frontend del sistema Pomodoro grupal es la parte visual con la que interactúan los usuarios. Permite gestionar sesiones de estudio, visualizar el temporizador en tiempo real, participar en salas y comunicarse mediante chat. Consume los servicios del backend para mostrar la información de forma dinámica y ofrecer una experiencia intuitiva y organizada.
+- **Josué** - Desarrollador Principal
